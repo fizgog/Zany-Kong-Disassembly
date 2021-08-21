@@ -6,6 +6,10 @@
 ; File used is from http://bbcmicro.co.uk/explore.php?id=2478
 ;-------------------------------------------------------------------------
 
+OSWRCH  = $FFEE
+OSWORD  = $FFF1
+OSBYTE  = $FFF4
+
 ORG 0
 
 L0000   = $0000
@@ -68,8 +72,8 @@ L0070   = $0070
 L0071   = $0071
 L0072   = $0072 ; Low byte screen address ?
 L0073   = $0073 ; High byte screen address ?
-L0074   = $0074
-L0075   = $0075
+L0074   = $0074 ; Low byte sprite address ?
+L0075   = $0075 ; High byte sprite address ?
 L0076   = $0076
 L0077   = $0077
 L0078   = $0078
@@ -95,33 +99,7 @@ L008F   = $008F
 L00C9   = $00C9
 L00E9   = $00E9
 L00FF   = $00FF
-USERV   = $0200
-BRKV    = $0202
-IRQ1V   = $0204
-IRQ2V   = $0206
-CLIV    = $0208
-BYTEV   = $020A
-WORDV   = $020C
-WRCHV   = $020E
-RDCHV   = $0210
-FILEV   = $0212
-ARGSV   = $0214
-BGETV   = $0216
-BPUTV   = $0218
-GBPBV   = $021A
-FINDV   = $021C
-FSCV    = $021E
-EVENTV  = $0220
-UPTV    = $0222
-NETV    = $0224
-VDUV    = $0226
-KEYV    = $0228
-INSV    = $022A
-REMV    = $022C
-CNPV    = $022E
-INDV1   = $0230
-INDV2   = $0232
-INDV3   = $0234
+
 L0400   = $0400
 L0420   = $0420
 L0500   = $0500
@@ -166,26 +144,7 @@ L9490   = $9490
 LCDEF   = $CDEF
 LD4D0   = $D4D0
 LF4F0   = $F4F0
-OSWRSC  = $FFB3
-OSRDSC  = $FFB9
-OSEVEN  = $FFBF
-GSINIT  = $FFC2
-GSREAD  = $FFC5
-NVRDCH  = $FFC8
-NNWRCH  = $FFCB
-OSFIND  = $FFCE
-OSGBPB  = $FFD1
-OSBPUT  = $FFD4
-OSBGET  = $FFD7
-OSARGS  = $FFDA
-OSFILE  = $FFDD
-OSRDCH  = $FFE0
-OSASCI  = $FFE3
-OSNEWL  = $FFE7
-OSWRCH  = $FFEE
-OSWORD  = $FFF1
-OSBYTE  = $FFF4
-OSCLI   = $FFF7
+
 
 ORG $1A00
         ; DATA ?
@@ -230,7 +189,7 @@ ORG $1A00
         EQUS $11,$00,$03,$00,$46,$00,$10,$00
 .L0B18  ; Sound Effect 4
         EQUS $11,$00,$01,$00,$96,$00,$0C,$00
-.L0B20  ;Sound Effect 5
+.L0B20  ; Sound Effect 5
         EQUS $10,$00,$01,$00,$08,$00,$03,$00
 .L0B28  ; Sound Effect 6
         EQUS $00,$00,$00,$00,$00,$00,$00,$00
@@ -267,8 +226,11 @@ ORG $1A00
 
         ; DATA
         ; 0B77
-        EQUB $00,$20,$4E,$18,$11,$1F    ; Tab(17,24)
-        EQUB $46,$46,$18,$11,$1F        ; Tab(17,24)
+        EQUB $00
+        EQUB $20,$4E                    ; Sound O[N ]
+        EQUB $18,$11,$1F                ; Tab(17,24)
+        EQUS "FF"                       ; Sound O[FF] text
+        EQUB $18,$11,$1F                ; Tab(17,24)
         EQUS "O: 'S' dnuoS"
         EQUB $18,$05,$1F                ; Tab(5,24)
         EQUS ".yalp  ot NOTTUB KCITSYOJ  ro RAB ECAPS sserP"
@@ -277,9 +239,10 @@ ORG $1A00
         EQUB $1B,$04,$1F                ; Tab(4,27)
         EQUS "hgih woH"
         EQUB $1A,$04,$1F                ; Tab(4,26)
-        EQUB $0C,$1A
+        EQUB $0C                        ; Clear text area
+        EQUB $1A                        ; Restore default windows
         EQUS "revO "
-        EQUB $0A
+        EQUB $0A                        ; Move cursor down one line
         EQUS " emaG "
 
         EQUS $0A,$0C,$0C,$0C,$11,$07,$1C,$06
@@ -4884,219 +4847,5 @@ L2AAB = L2AAA+1
         EQUS $00,$00
 
 .BeebDisEndAddr
+
 SAVE "ZANY1.bin",BeebDisStartAddr,BeebDisEndAddr
-
-if(0)
-Begin:Strings discovered
-string $0A0D 3 ; "xP:"
-string $0A3D 3 ; "xP:"
-string $0A67 3 ; "xP:"
-string $0A7A 3 ; "Dj@"
-string $0A8C 3 ; "`H`"
-string $0AE0 4 ; "EEEE"
-string $0B38 11 ; "TFOS RALOS "
-string $0B46 12 ; "serocS  hgiH"
-string $0B55 10 ; "GNOK  YNAZ"
-string $0B62 5 ; " YNAZ"
-string $0B82 12 ; "O: 'S' dnuoS"
-string $0B91 45 ; ".yalp  ot NOTTUB KCITSYOJ  ro RAB ECAPS sserP"
-string $0BC1 15 ; "? bmilc uoy nac"
-string $0BD3 8 ; "hgih woH"
-string $0BE0 5 ; "revO "
-string $0BE6 6 ; " emaG "
-string $0C15 11 ; "BBB~BBB~BBB"
-string $0C23 5 ; "<Z<$f"
-string $0C43 3 ; "r[*"
-string $0C6E 5 ; "k`  `"
-string $0C8B 3 ; "P2P"
-string $0C94 4 ; "{P(p"
-string $11BD 3 ; " 00"
-string $11CD 3 ; "0 0"
-string $11DD 3 ; "!11"
-string $11F5 3 ; "333"
-string $11FD 3 ; ""33"
-string $1225 5 ; "###33"
-string $1239 3 ; "000"
-string $1241 3 ; "00 "
-string $1245 3 ; "   "
-string $1264 8 ; "000030!0"
-string $12AC 4 ; "0000"
-string $12B3 6 ; "00000 "
-string $12BC 3 ; "   "
-string $12C3 5 ; " 000 "
-string $12CB 5 ; "00000"
-string $12D3 12 ; " 0000 001###"
-string $1325 3 ; "333"
-string $1353 5 ; "33333"
-string $135A 3 ; "03#"
-string $13C3 4 ; "    "
-string $13CD 3 ; "000"
-string $13D9 3 ; "00!"
-string $141A 5 ; "33 0 "
-string $1433 5 ; "33333"
-string $143A 6 ; "33"33""
-string $14A3 5 ; "    0"
-string $14B4 4 ; "00!!"
-string $14CC 4 ; "3333"
-string $14D3 5 ; "3"33""
-string $14FA 6 ; "33 0 3"
-string $153D 3 ; "#33"
-string $154D 3 ; "3#3"
-string $15A5 5 ; "###33"
-string $15B9 3 ; "333"
-string $15C1 3 ; "333"
-string $162C 4 ; "3333"
-string $1633 6 ; "33333#"
-string $163C 3 ; "###"
-string $164B 5 ; "33333"
-string $1653 6 ; "#33333"
-string $165C 3 ; "###"
-string $1695 3 ; "#33"
-string $16A5 3 ; "333"
-string $16DD 3 ; "333"
-string $16E5 3 ; "#33"
-string $1764 4 ; "0008"
-string $176B 6 ; ":erocS"
-string $1837 5 ; "ndnm\"
-string $183F 6 ; "F l(}S"
-string $1857 3 ; "W;-"
-string $1899 9 ; "x.(.pY(Yp"
-string $18E3 7 ; "sJJfres"
-string $18EB 6 ; "sherep"
-string $18F4 5 ; "0eseq"
-string $1907 3 ; "tQr"
-string $1921 3 ; "8eo"
-string $1982 3 ; "Y w"
-string $1A1F 3 ; "&W "
-string $1A32 3 ; "&W "
-string $1AB4 6 ; "`HJJJJ"
-string $1ABB 3 ; "i0 "
-string $1AC4 3 ; "i0L"
-string $1D98 8 ; "uuu  uuu"
-string $1E12 4 ; "PPPP"
-string $1E72 4 ; "PPPP"
-string $1F94 4 ; ""9<3"
-string $1FAA 4 ; "000("
-string $1FAF 7 ; "(000000"
-string $1FBA 4 ; "    "
-string $1FDB 4 ; "3 N""
-string $1FF4 4 ; "a 5""
-string $201C 3 ; "c0."
-string $2025 4 ; "b =""
-string $2032 4 ; "$c0$"
-string $2049 4 ; "a =""
-string $20B2 4 ; "o N""
-string $20D3 4 ; "ej)p"
-string $20DC 4 ; "ek)p"
-string $2133 3 ; " $""
-string $2151 3 ; "LW!"
-string $215F 3 ; " $""
-string $21C9 3 ; " $""
-string $21D3 3 ; " $""
-string $21DD 3 ; " $""
-string $225C 5 ; "i` N""
-string $2274 18 ; "C:BIT&86:BPL0,)&# "
-string $2292 10 ; "!$'*-0+(%""
-string $22A9 10 ; ""%(+0-*'$!"
-string $22BF 29 ; " #&),/148;?BFIMPTX[_bfimptx{"
-string $2322 4 ; "% I%"
-string $2374 3 ; " I%"
-string $237B 3 ; " I%"
-string $2386 3 ; " I%"
-string $239A 4 ; " {&L"
-string $23B9 3 ; "=$v"
-string $23ED 3 ; "LU#"
-string $23F6 3 ; "$$w"
-string $23FF 3 ; " E%"
-string $2447 3 ; " E%"
-string $2454 3 ; "%$x"
-string $2464 4 ; "+ 3%"
-string $2492 4 ; "% I%"
-string $24AB 3 ; " I%"
-string $24BE 3 ; "1$y"
-string $24DA 4 ; " {% "
-string $24DF 4 ; "% I%"
-string $24E7 3 ; " I%"
-string $24F0 3 ; "`$z"
-string $2517 5 ; "H {%h"
-string $252C 5 ; "% {%L"
-string $2541 4 ; "r)P`"
-string $255D 3 ; "r)P"
-string $2575 3 ; "r)P"
-string $26C2 3 ; "y`D"
-string $26C6 3 ; "^I$"
-string $276D 4 ; "b ,("
-string $277F 3 ; " q("
-string $2791 4 ; "b ,("
-string $279E 7 ; "b ,( q("
-string $27B7 4 ; " N")"
-string $27F3 6 ; "^I$ !("
-string $280F 4 ; "L3'`"
-string $2853 4 ; "r%z)"
-string $2864 4 ; "r%x)"
-string $2881 3 ; "r)P"
-string $289B 3 ; "r)P"
-string $28D2 6 ; "- N"0("
-string $2904 3 ; " \*"
-string $2921 4 ; ")$cP"
-string $2935 4 ; "b H*"
-string $293B 3 ; " N""
-string $295F 5 ; "cLj) "
-string $298E 4 ; "$c0%"
-string $2993 3 ; "^I$"
-string $2A10 3 ; "o`h"
-string $2A2C 3 ; "r)P"
-string $2A42 3 ; "r)P"
-string $2A56 3 ; "r)P"
-string $2AA6 4 ; "X& C"
-string $2ACE 3 ; " {/"
-string $2AFD 4 ; "/ ^""
-string $2B36 7 ; "0 l/LV+"
-string $2B52 6 ; "* l/ q"
-string $2B76 3 ; "S $"
-string $2B7B 3 ; "[ "
-string $2BB3 3 ; " {/"
-string $2C41 5 ; "H l/L"
-string $2C7C 6 ; "N l/ q"
-string $2C87 3 ; "L|+"
-string $2CA0 3 ; "S $"
-string $2CA5 3 ; "[ "
-string $2CCD 3 ; " {/"
-string $2CD1 3 ; "( p"
-string $2CE0 5 ; ". m! "
-string $2CE6 5 ; "/ #! "
-string $2CEC 5 ; "& m! "
-string $2D34 3 ; "Lc-"
-string $2D83 3 ; "S $"
-string $2D88 3 ; "[ "
-string $2DA5 4 ; "n {/"
-string $2DF5 3 ; "Lz."
-string $2E36 6 ; " l/Lz."
-string $2E79 3 ; "f q"
-string $2E9A 3 ; "S $"
-string $2EC4 3 ; "0 p"
-string $2EDD 3 ; " L/"
-string $2F82 3 ; "0Lp"
-string $3078 5 ; "xJJJi"
-string $30C5 3 ; "Lf/"
-string $3166 3 ; "  p"
-string $3189 3 ; " L/"
-string $31F8 3 ; "{)"
-string $320D 9 ; "?***?*?*?"
-string $322D 9 ; "?***?*?*?"
-string $3253 5 ; "SOLAR"
-string $325B 5 ; " SOFT"
-string $3263 5 ; "SOLAR"
-string $326B 5 ; " SOFT"
-string $3273 5 ; "SOLAR"
-string $327B 5 ; " SOFT"
-string $3283 5 ; "SOLAR"
-string $328B 5 ; " SOFT"
-string $3293 5 ; "SOLAR"
-string $329B 5 ; " SOFT"
-string $32A3 5 ; "SOLAR"
-string $32AB 5 ; " SOFT"
-string $32C0 12 ; ": eman retnE"
-End:Strings discovered
-
-endif
