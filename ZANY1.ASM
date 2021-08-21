@@ -43,16 +43,16 @@ L003F   = $003F
 L0046   = $0046
 L0049   = $0049
 L004F   = $004F
-score1   = $0050
-score2   = $0051
-score3   = $0052
+score1                  = $0050
+score2                  = $0051
+score3                  = $0052
 L0053   = $0053
 L0054   = $0054
 L0055   = $0055
 L0056   = $0056
 L0057   = $0057
-L0058   = $0058 ; Text Address ?
-L0059   = $0059
+text_address_low        = $0058 
+text_address_high       = $0059 
 L005A   = $005A
 L005B   = $005B
 L005C   = $005C
@@ -72,13 +72,13 @@ L006B   = $006B
 L006C   = $006C
 L006D   = $006D
 L006E   = $006E
-L006F   = $006F
-L0070   = $0070
-L0071   = $0071
-L0072   = $0072 ; Low byte screen address ?
-L0073   = $0073 ; High byte screen address ?
-L0074   = $0074 ; Low byte sprite address ?
-L0075   = $0075 ; High byte sprite address ?
+Height                  = $006F
+temp_address_low        = $0070
+temp_address_high       = $0071
+screen_address_low      = $0072 
+screen_address_high     = $0073 
+sprite_address_low      = $0074
+sprite_address_high     = $0075
 L0076   = $0076
 L0077   = $0077
 L0078   = $0078
@@ -105,11 +105,19 @@ L00C9   = $00C9
 L00E9   = $00E9
 L00FF   = $00FF
 
+ORG &400
+
 L0400   = $0400
 L0420   = $0420
+
+ORG &500
+
 L0500   = $0500
 L0571   = $0571
 L058E   = $058E
+
+ORG &600
+
 L0600   = $0600
 L060F   = $060F
 L0610   = $0610
@@ -140,6 +148,7 @@ L0653   = $0653
 L0657   = $0657
 L06A0   = $06A0
 L06B8   = $06B8
+
 L5450   = $5450
 L7470   = $7470
 L7575   = $7575
@@ -200,7 +209,7 @@ ORG $1A00
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
 .L0B30  ; Sound Effect 7
         EQUB $12,$00,$F3,$FF
-.L0B34  ; Pitch and duration are altered with code
+.L0B34  ; Pitch and duration are altered within code
         EQUB $95,$00,$04,$00
 
         EQUS "TFOS RALOS "
@@ -228,8 +237,7 @@ ORG $1A00
 
 ;-------------------------------------------------------------------------
 
-        ; DATA
-        ; 0B77
+        ; DATA 0B77
         EQUB $00                                                ; ??
         EQUS " N"                                               ; Sound O[N ] text
         EQUB $18,$11,$1F                                        ; Tab(17,24)
@@ -756,15 +764,15 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 .CalcXYAddress
         LDA #$00
-        STA L0071
-        STA L0072
+        STA temp_address_high
+        STA screen_address_low
         TXA
         AND #$FE
         ASL A
-        ROL L0071
+        ROL temp_address_high
         ASL A
-        ROL L0071
-        STA L0070
+        ROL temp_address_high
+        STA temp_address_low
         TYA
         AND #$07
         PHA
@@ -772,20 +780,20 @@ ORG $1A00
         AND #$F8
         LSR A
         LSR A
-        STA L0073
+        STA screen_address_high
         LSR A
         LSR A
-        ROR L0072
-        ADC L0073
-        STA L0073
+        ROR screen_address_low
+        ADC screen_address_high
+        STA screen_address_high
         PLA
-        ADC L0072
-        ADC L0070
-        STA L0072
+        ADC screen_address_low
+        ADC temp_address_low
+        STA screen_address_low
         LDA #$30
-        ADC L0073
-        ADC L0071
-        STA L0073
+        ADC screen_address_high
+        ADC temp_address_high
+        STA screen_address_high
         RTS
 
 ;-------------------------------------------------------------------------
@@ -796,20 +804,20 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 .PlotSpriteEOR16
 
-        LDA #$0F                ; 16 wide sprite
+        LDA #$0F                        ; 16 wide sprite
 
 .PlotSpriteEOR
         PHA
         JSR CalcXYAddress
 
         PLA
-        TAX                     ; X contains width?
+        TAX                             ; X contains width?
 .L1904
-        LDY L006F               ; Y contains height?
+        LDY Height                      ; Y contains height?
 .L1906
-        LDA (L0074),Y
-        EOR (L0072),Y
-        STA (L0072),Y
+        LDA (sprite_address_low),Y      ; Sprite address
+        EOR (screen_address_low),Y
+        STA (screen_address_low),Y      ; Screen address
         TYA
         SEC
         SBC #$08
@@ -819,8 +827,8 @@ ORG $1A00
         DEX
         BMI L1942
 
-        INC L0074
-        LDY L0074
+        INC sprite_address_low
+        LDY sprite_address_low
         TYA
         AND #$07
         BNE L192A
@@ -828,14 +836,14 @@ ORG $1A00
         DEY
         TYA
         SEC
-        ADC L006F
-        STA L0074
+        ADC Height
+        STA sprite_address_low
         BCC L192A
 
-        INC L0075
+        INC sprite_address_high
 .L192A
-        INC L0072
-        LDY L0072
+        INC screen_address_low
+        LDY screen_address_low
         TYA
         AND #$07
         BNE L1904
@@ -844,10 +852,10 @@ ORG $1A00
         TYA
         CLC
         ADC #$79
-        STA L0072
-        LDA L0073
+        STA screen_address_low
+        LDA screen_address_high
         ADC #$02
-        STA L0073
+        STA screen_address_high
         BCC L1904
 
 .L1942
@@ -865,7 +873,7 @@ ORG $1A00
         INX
         STX L0056
         LDA #$17
-        STA L0059
+        STA text_address_high
         LDA #$03
         STA L005A
         LDA #$A6
@@ -893,7 +901,7 @@ ORG $1A00
 
 .L197F
         LDA #$17
-        STA L0059
+        STA text_address_high
         JSR L1A77
 
         LDA #$05
@@ -929,7 +937,7 @@ ORG $1A00
         JSR L1AEB
 
         LDA #$17
-        STA L0059
+        STA text_address_high
         LDA #$04
         JMP OSWRCH          ; Write text at text cursor
 
@@ -988,7 +996,7 @@ ORG $1A00
 
 .L1A02
         LDA L0082
-        STA L0058
+        STA text_address_low
 .L1A06
         LDY L0080
 .L1A08
@@ -1000,7 +1008,7 @@ ORG $1A00
 
         LDX #$00
         STX L0057
-        LDA (L0058),Y
+        LDA (text_address_low),Y
         ASL A
         ROL L0057
 .L1A1B
@@ -1015,7 +1023,7 @@ ORG $1A00
 
         DEY
         STX L0057
-        LDA (L0058),Y
+        LDA (text_address_low),Y
         ASL A
         ROL L0057
         ASL A
@@ -1026,7 +1034,7 @@ ORG $1A00
         JSR OSWRCH
 
         DEY
-        LDA (L0058),Y
+        LDA (text_address_low),Y
         DEY
         STY L0080
         TAX
@@ -1119,7 +1127,7 @@ ORG $1A00
 
         RTS
 
--------------------------------------------------------------------------
+;-------------------------------------------------------------------------
 ; BCDtoScreen
 ;-------------------------------------------------------------------------
 ; On entry  : A contains value
@@ -1176,13 +1184,13 @@ ORG $1A00
         LDX #$03
 .L1AEF
         LDA (L0054),Y
-        STA L0072,X
+        STA screen_address_low,X
         DEY
         DEX
         BPL L1AEF
 
         LDA (L0054),Y
-        STA L006F
+        STA Height
         DEY
         LDA (L0054),Y
         STY L0057
@@ -1205,9 +1213,9 @@ ORG $1A00
 ; On exit   : 
 ;-------------------------------------------------------------------------
 .PutText
-        STA L0058
+        STA text_address_low
 .L1B0C
-        LDA (L0058),Y
+        LDA (text_address_low),Y
         JSR OSWRCH
 
         DEY
@@ -1255,7 +1263,7 @@ ORG $1A00
         LDX #$0B
         STX L0080
         LDA #$B2
-        STA L0058
+        STA text_address_low
         LDA #$04
         STA L0081
 .L1B4A
@@ -1308,7 +1316,7 @@ ORG $1A00
         JSR L1B15
 
         LDA #$FA
-        STA L0058
+        STA text_address_low
         LDY #$02
         JSR L1A08
 
@@ -1343,7 +1351,7 @@ ORG $1A00
 
 .L1BC8
         LDA #$18
-        STA L0059
+        STA text_address_high
         LDA #$0C
         STA L0082
         LDA #$0B
@@ -1365,7 +1373,7 @@ ORG $1A00
         BNE L1BDD
 
         LDA #$0C
-        STA L0058
+        STA text_address_low
         LDA #$0F
         JSR L1B15
 
@@ -1414,7 +1422,7 @@ L1C1A = L1C19+1
         DEC L0081
         BNE L1C0D
 
-        LDA L0058
+        LDA text_address_low
         STA L0082
         LDA #$0C
         JSR L19EF
@@ -1430,9 +1438,9 @@ L1C1A = L1C19+1
         LDA #$06
         STA L0081
         LDA #$18
-        STA L0059
+        STA text_address_high
         LDA #$70
-        STA L0058
+        STA text_address_low
         STA L0082
         LDY #$4F
         STY L0080
@@ -1725,11 +1733,11 @@ L1FE6 = L1FE5+1
         LDA #$08
         STA L008C
         LDA #$78
-        STA L006F
+        STA Height
         LDA #$15
-        STA L0075
+        STA sprite_address_high
         LDA #$00
-        STA L0074               ; Sprite Address $1500
+        STA sprite_address_low               ; Sprite Address $1500
         LDX L006C
         LDY #$20
         LDA #$1F
@@ -1753,16 +1761,16 @@ L1FE6 = L1FE5+1
         STA L008D
 .L209E
         LDA #$15
-        STA L0075
+        STA sprite_address_high
         LDA #$00
-        STA L0074               ; Sprite Address $1500
+        STA sprite_address_low               ; Sprite Address $1500
         LDX L006C
         LDY #$20
         LDA #$1F
         JSR PlotSpriteEOR       ; Sprite 32 wide
 
         LDA #$18
-        STA L006F
+        STA Height
 .L20B3
         JSR L224E
 
@@ -1770,9 +1778,9 @@ L1FE6 = L1FE5+1
         BCC L20C9
 
         LDA #$0A
-        STA L0075
+        STA sprite_address_high
         LDA #$A0
-        STA L0074               ; Sprite Address $0AA0
+        STA sprite_address_low               ; Sprite Address $0AA0
         LDX #$50
         LDY #$66
         JSR PlotSpriteEOR16
@@ -1802,9 +1810,9 @@ L1FE6 = L1FE5+1
         LDA #$16
         STA L000D
         LDA #$0A
-        STA L0075
+        STA sprite_address_high
         LDA #$E0
-        STA L0074               ; Sprite Address $0AE0
+        STA sprite_address_low               ; Sprite Address $0AE0
         LDX L000E
         LDY L000F
         LDA #$03
@@ -1839,7 +1847,7 @@ L1FE6 = L1FE5+1
 
 .L2123
         LDA #$28
-        STA L006F
+        STA Height
         LDX #$04
 .L2129
         STX L0060
@@ -1882,7 +1890,7 @@ L1FE6 = L1FE5+1
         BPL L2129
 
         LDA #$18
-        STA L006F
+        STA Height
         RTS
 
 .L216D
@@ -1930,14 +1938,14 @@ L1FE6 = L1FE5+1
 
         LDA #$80
 .L21AC
-        STA L0074
+        STA sprite_address_low
         LDA #$1E
-        STA L0075               ; Sprite Address $1E80 or $1EC0
+        STA sprite_address_high               ; Sprite Address $1E80 or $1EC0
         JMP PlotSpriteEOR16
 
 .L21B5
         LDA #$28
-        STA L006F
+        STA Height
         LDX #$01
         STX L0610
         STX L0612
@@ -1957,7 +1965,7 @@ L1FE6 = L1FE5+1
         JSR L2224
 
         LDA #$18
-        STA L006F
+        STA Height
         LDA #$00
         STA L0616
         JSR L2193
@@ -1989,9 +1997,9 @@ L1FE6 = L1FE5+1
 
         LDA L006B
 .L2211
-        STA L0074
+        STA sprite_address_low
         LDA #$1E
-        STA L0075
+        STA sprite_address_high
         LDA L0C74,Y
         TAX
         LDA L0C78,Y
@@ -2004,9 +2012,9 @@ L1FE6 = L1FE5+1
         LDA L0C7C,X
         TAX
         LDA #$1D
-        STA L0075
+        STA sprite_address_high
         LDA #$80
-        STA L0074               ; Sprite Address $1D80
+        STA sprite_address_low               ; Sprite Address $1D80
         LDA #$07
         JMP PlotSpriteEOR       ; Sprite 8 wide
 
@@ -2021,9 +2029,9 @@ L1FE6 = L1FE5+1
 .L223F
         LDX L0061
         LDA #$11
-        STA L0075
+        STA sprite_address_high
         LDA #$60
-        STA L0074               ; Sprite Address $1160
+        STA sprite_address_low               ; Sprite Address $1160
         LDA #$07
         JMP PlotSpriteEOR       ; Sprite 8 wide
 
@@ -2045,9 +2053,9 @@ L1FE6 = L1FE5+1
         BCC L225D
 
         LDA #$0A
-        STA L0075
+        STA sprite_address_high
         LDA #$A0
-        STA L0074               ; Sprite Address $0AA0
+        STA sprite_address_low               ; Sprite Address $0AA0
         LDX #$04
         LDY #$D7
         JMP PlotSpriteEOR16
@@ -2509,7 +2517,7 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY #$00
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         RTS
 
@@ -2531,7 +2539,7 @@ L1FE6 = L1FE5+1
         ASL A
         ASL A
         TAY
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$50
         BEQ L2565
@@ -2547,7 +2555,7 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY L0057
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$50
         RTS
@@ -2684,9 +2692,9 @@ L1FE6 = L1FE5+1
         ADC L0080
         TAX
         LDA L0C50,Y
-        STA L0074
+        STA sprite_address_low
         LDA #$0F
-        STA L0075               ; Sprite Address $0F??
+        STA sprite_address_high               ; Sprite Address $0F??
         LDA L0C4C,Y
         ADC L0081
         TAY
@@ -2700,9 +2708,9 @@ L1FE6 = L1FE5+1
 
         TAY
         LDA L0C54,Y
-        STA L0074
+        STA sprite_address_low
         LDA L0C5D,Y
-        STA L0075               ; Sprite Address $????
+        STA sprite_address_high               ; Sprite Address $????
         LDX L0080
         LDY L0081
         LDA #$00
@@ -2712,9 +2720,9 @@ L1FE6 = L1FE5+1
 .L264F
         TAY
         LDA L0C66,Y
-        STA L0074
+        STA sprite_address_low
         LDA L0C5D,Y
-        STA L0075               ; Sprite Address $????
+        STA sprite_address_high               ; Sprite Address $????
         LDA #$0A
         ADC L0081
         TAY
@@ -2724,9 +2732,9 @@ L1FE6 = L1FE5+1
 
         LDY L0057
         LDA L0C54,Y
-        STA L0074
+        STA sprite_address_low
         LDA L0C5D,Y
-        STA L0075               ; Sprite Address $????
+        STA sprite_address_high               ; Sprite Address $????
         LDA #$09
         LDX L0080
         LDY L0081
@@ -3041,9 +3049,9 @@ L1FE6 = L1FE5+1
 .L281F
         LDA L005E
 .L2821
-        STA L0074
+        STA sprite_address_low
         LDA #$1F
-        STA L0075               ; Sprite Address $1F??
+        STA sprite_address_high               ; Sprite Address $1F??
         LDA #$0B
         JMP PlotSpriteEOR       ; Sprite 12 wide
 
@@ -3056,10 +3064,10 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY #$00
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         STA L007A
         LDY #$18
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         STA L0078
         CLC
         LDA L0062
@@ -3070,7 +3078,7 @@ L1FE6 = L1FE5+1
 
         LDY #$00
         LDX #$FF
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND L007A
         AND #$A0
         CMP #$A0
@@ -3081,7 +3089,7 @@ L1FE6 = L1FE5+1
         STX L007A
         LDY #$18
         LDX #$FF
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND L0078
         AND #$A0
         CMP #$A0
@@ -3102,7 +3110,7 @@ L1FE6 = L1FE5+1
 
         LDY #$00
         LDX #$FF
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$40
         BEQ L2889
@@ -3119,7 +3127,7 @@ L1FE6 = L1FE5+1
 
         LDY #$00
         LDX #$FF
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$40
         BEQ L28A3
@@ -3372,23 +3380,23 @@ L1FE6 = L1FE5+1
         LDA #$74
 .L29FC
         EOR #$A0
-        STA L0074
+        STA sprite_address_low
         LDA #$1C
-        STA L0075               ; Sprite Address $1CA0
+        STA sprite_address_high               ; Sprite Address $1CA0
         LDA #$28
-        STA L006F
+        STA Height
         LDA #$0B
         JSR PlotSpriteEOR       ; Sprite 12 wide
 
         LDA #$18
-        STA L006F
+        STA Height
         RTS
 
 .L2A12
         PLA
-        STA L0074
+        STA sprite_address_low
         LDA #$11
-        STA L0075               ; Sprite Address $11??
+        STA sprite_address_high               ; Sprite Address $11??
         LDA #$0B
         JMP PlotSpriteEOR       ; Sprite 12 wide
 
@@ -3401,7 +3409,7 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY #$00
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$50
         BEQ L2A34
@@ -3416,7 +3424,7 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY #$00
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$50
         RTS
@@ -3430,7 +3438,7 @@ L1FE6 = L1FE5+1
         JSR CalcXYAddress
 
         LDY #$00
-        LDA (L0072),Y
+        LDA (screen_address_low),Y
         AND #$50
         CMP #$40
         RTS
@@ -3451,16 +3459,16 @@ L1FE6 = L1FE5+1
         LDX #$14
         LDY #$20
         LDA #$11
-        STA L0075
+        STA sprite_address_high
         LDA #$80
-        STA L0074               ; Sprite Address $1180
+        STA sprite_address_low               ; Sprite Address $1180
         LDA #$78
-        STA L006F
+        STA Height
         LDA #$1F
 .L2A7A
         JSR PlotSpriteEOR       ; Sprite 32 wide
         LDA #$18
-        STA L006F
+        STA Height
         RTS
 
 .L2A82
@@ -3470,12 +3478,12 @@ L1FE6 = L1FE5+1
         LDX #$24
         LDY #$28
         LDA #$13
-        STA L0075
+        STA sprite_address_high
         LDA #$80
 .L2A90
-        STA L0074
+        STA sprite_address_low
         LDA #$38
-        STA L006F
+        STA Height
         LDA #$17
         BNE L2A7A
 
@@ -3483,19 +3491,19 @@ L1FE6 = L1FE5+1
         LDX #$1C
         LDY #$28
         LDA #$14
-        STA L0075
+        STA sprite_address_high
         LDA #$40
         BNE L2A90
-
-        ; DATA ???????
-        CLI
+       CLI
 .L2AA7
         ROL L0020
-L2AA8 = L2AA7+1
+
+        ; DATA ???????
+        EQUB $43,$19
+
 .L2AAA
-        ORA L7F20,Y
-L2AAB = L2AAA+1
-        ORA L1F20,Y
+        JSR L197F
+        JSR L2F1F
         LDX #$12
         STX L0080
         LDY #$E7
@@ -4153,9 +4161,9 @@ L2AAB = L2AAA+1
         LDA L0C91,Y
         TAY
         LDA #$0C
-        STA L0075
+        STA sprite_address_high
         LDA #$E0
-        STA L0074               ; Sprite Address $0CE0
+        STA sprite_address_low               ; Sprite Address $0CE0
         LDA #$07
         JSR PlotSpriteEOR       ; Sprite 8 wide
 
@@ -4191,7 +4199,7 @@ L2AAB = L2AAA+1
         JSR L25F1
 
         LDA #$0B
-        STA L0059
+        STA text_address_high
         LDA #$F3
         LDY #$04
         JSR PutText
@@ -4271,6 +4279,7 @@ L2AAB = L2AAA+1
         STX L005C
         RTS
 
+        ; Initialise ??
 .L2F1F
         LDX #$00
         STX L005E
@@ -4287,7 +4296,7 @@ L2AAB = L2AAA+1
         STX L008A
         STX L008B
         LDA #$18
-        STA L006F
+        STA Height
         STA L0067
         LDY #$02
         STY L0082
@@ -4516,7 +4525,7 @@ L2AAB = L2AAA+1
         BPL L3091
 
         LDA #$06
-        STA L0059
+        STA text_address_high
         LDA #$C0
         LDY #$0E
         JSR PutText
@@ -4532,7 +4541,7 @@ L2AAB = L2AAA+1
         JSR PutText
 
         LDA #$0B
-        STA L0059
+        STA text_address_high
         LDA #$7F
         LDX #$00
 .L30BC
@@ -4585,7 +4594,7 @@ L2AAB = L2AAA+1
         STA $57
         LDA L0080
         AND #$FE
-        STA L0070
+        STA temp_address_low
         LDA L0082
         CMP #$06
         BCC L3129
@@ -4593,7 +4602,7 @@ L2AAB = L2AAA+1
         CMP #$08
         BEQ L3129
 
-        CPX L0070
+        CPX temp_address_low
         BNE L3129
 
         SEC
@@ -4619,7 +4628,7 @@ L2AAB = L2AAA+1
 
         TXA
         ADC #$07
-        CMP L0070
+        CMP temp_address_low
         BCC L315C
 
         CLC
@@ -4642,7 +4651,7 @@ L2AAB = L2AAA+1
         CMP #$02
         BCS L315D
 
-        CPX L0070
+        CPX temp_address_low
         BCC L3161
 
 .L3158
@@ -4652,7 +4661,7 @@ L2AAB = L2AAA+1
         RTS
 
 .L315D
-        CPX L0070
+        CPX temp_address_low
         BCC L3158
 
 .L3161
@@ -4678,9 +4687,11 @@ L2AAB = L2AAA+1
 
         RTS
 
+;-------------------------------------------------------------------------
+
 .L317E
         LDA #$0B
-        STA L0059
+        STA text_address_high
         LDA #$E0
         LDY #$12
         JSR PutText
@@ -4696,7 +4707,7 @@ L2AAB = L2AAA+1
         LDX #$FF
         TXS
         LDA #$0B
-        STA L0059
+        STA text_address_high               ; Text Hi byte address
         LDA #$82
         LDY #$5D
         JSR PutText
@@ -4770,6 +4781,8 @@ L2AAB = L2AAA+1
 .L31FD
         JMP L2AA8
 
+;-------------------------------------------------------------------------
+
 .L3200
         EQUB $00,$00,$00,$00,$15,$00,$00,$15
         EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A
@@ -4830,22 +4843,22 @@ L2AAB = L2AAA+1
 
         ; Relocation code from 1A00 to 0A00
         LDA #$00
-        STA L0070
-        STA L0072
+        STA temp_address_low
+        STA screen_address_low
         LDA #$0A
-        STA L0071
+        STA temp_address_high
         LDA #$1A
-        STA L0073
+        STA screen_address_high
         LDY #$00
 .L3319
-        LDA (L0072),Y
-        STA (L0070),Y
+        LDA (screen_address_low),Y
+        STA (temp_address_low),Y
         INY
         BNE L3319
 
-        INC L0071
-        INC L0073
-        LDA L0073
+        INC temp_address_high
+        INC screen_address_high
+        LDA screen_address_high
         CMP #$43
         BNE L3319
 
