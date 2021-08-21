@@ -221,16 +221,24 @@ ORG $1A00
         EQUS $00,$00,$00,$CF,$00,$00,$00,$00
         EQUS $00,$00,$00,$CF,$00,$00,$00,$00
         EQUS $8A,$8A,$8A,$8A,$00,$00,$00,$00
+       
+.L0B00  ; Sound Effect 1
         EQUS $12,$00,$02,$00,$0F,$00,$02,$00
+.L0B08  ; Sound Effect 2
         EQUS $13,$00,$04,$00,$64,$00,$14,$00
+.L0B10  ; Sound Effect 3
         EQUS $11,$00,$03,$00,$46,$00,$10,$00
+.L0B18  ; Sound Effect 4
         EQUS $11,$00,$01,$00,$96,$00,$0C,$00
+.L0B20  ;Sound Effect 5
         EQUS $10,$00,$01,$00,$08,$00,$03,$00
+.L0B28  ; Sound Effect 6
         EQUS $00,$00,$00,$00,$00,$00,$00,$00
+.L0B30  ; Sound Effect 7
         EQUS $12,$00,$F3,$FF
-
-.L0B34
+.L0B34  ; Pitch and duration are altered with code
         EQUS $95,$00,$04,$00
+
         EQUS "TFOS RALOS "
         EQUS $01,$04,$1F                ; Tab(4,1)
         EQUS "serocS  hgiH"
@@ -250,7 +258,7 @@ ORG $1A00
 ; On entry  : X contains LSB
 ; On exit   : 
 ;-------------------------------------------------------------------------
-.L0B70
+.PlaySound
         LDA #$07
         LDY #$0B
         JMP OSWORD          ; Play Sound
@@ -2095,7 +2103,7 @@ L1FE6 = L1FE5+1
         BEQ L230D
 
         LDX #$00
-        JSR L0B70
+        JSR PlaySound
 
 .L230D
         LDA L0085
@@ -2103,7 +2111,7 @@ L1FE6 = L1FE5+1
         BNE L2318
 
         LDX #$08
-        JSR L0B70
+        JSR PlaySound
 
 .L2318
         LDA L0087
@@ -2236,7 +2244,7 @@ L1FE6 = L1FE5+1
         BPL L23F0
 
         LDX #$10
-        JSR L0B70
+        JSR PlaySound
 
         JSR L25FB
 
@@ -3879,7 +3887,7 @@ L2AAB = L2AAA+1
         JSR L2F7B
 
         LDX #$28
-        JSR L0B70
+        JSR PlaySound
 
 .L2CD5
         LDA #$0E
@@ -4224,7 +4232,7 @@ L2AAB = L2AAA+1
         SBC L0077
         STA L0B34
         LDX #$30
-        JSR L0B70
+        JSR PlaySound
 
         DEC L0076
         BNE L2EB0
@@ -4351,11 +4359,11 @@ L2AAB = L2AAA+1
         JSR L2F06
 
         LDX #$30
-        JMP L0B70
+        JMP PlaySound
 
 .L2F86
         LDX #$18
-        JSR L0B70
+        JSR PlaySound
 
         LDA #$10
         STA L0076
@@ -4672,7 +4680,7 @@ L2AAB = L2AAA+1
         LDX #$FF
         STX L0063
         LDX #$20
-        JSR L0B70
+        JSR PlaySound
 
         LDA #$00
         LDY #$05
@@ -4724,7 +4732,7 @@ L2AAB = L2AAA+1
 
 .L31AC
         LDA #$78
-        LDX L0B70
+        LDX L0B70       ; ???
         CPX #$60
         BNE L31B7
 
