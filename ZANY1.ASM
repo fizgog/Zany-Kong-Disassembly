@@ -108,7 +108,6 @@ L00FF   = $00FF
 ORG &400
 
 L0400   = $0400
-L0420   = $0420
 
 ORG &500
 
@@ -950,7 +949,7 @@ ORG $1A00
         LDA #$08
         STA L0082
         LDA #$0F
-        JSR L1B15
+        JSR SetGCOL
 
 .L19C8
         LDA #$03
@@ -982,7 +981,7 @@ ORG $1A00
 .L19EF
         STA L0081
         LDA #$0B
-        JSR L1B15
+        JSR SetGCOL
 
 .L19F6
         JSR L1A5C
@@ -1222,18 +1221,23 @@ ORG $1A00
         BPL L1B0C
 
         RTS
-;-------------------------------------------------------------------------
 
-.L1B15
+;-------------------------------------------------------------------------
+; SetGCOL
+;-------------------------------------------------------------------------
+; On entry  : A contains colour
+; On exit   : 
+;-------------------------------------------------------------------------
+.SetGCOL
         PHA
         LDA #$12
-        JSR OSWRCH          ; Define graphics colour
+        JSR OSWRCH      ; Define graphics colour
 
         LDA #$00
-        JSR OSWRCH          ; Does nothing ?
+        JSR OSWRCH      ; Mode action 
 
         PLA
-        JMP OSWRCH
+        JMP OSWRCH      ; Plot the specdified colour
 
 ;-------------------------------------------------------------------------
 ; AddScore
@@ -1258,7 +1262,7 @@ ORG $1A00
 
 .L1B39
         LDA #$0F
-        JSR L1B15
+        JSR SetGCOL
 
         LDX #$0B
         STX L0080
@@ -1313,7 +1317,7 @@ ORG $1A00
         JSR L19EF
 
         LDA #$07
-        JSR L1B15
+        JSR SetGCOL
 
         LDA #$FA
         STA text_address_low
@@ -1329,7 +1333,7 @@ ORG $1A00
         BNE L1B9E
 
         LDA #$0C
-        JSR L1B15
+        JSR SetGCOL
 
         LDA #$04
         STA L0081
@@ -1355,7 +1359,7 @@ ORG $1A00
         LDA #$0C
         STA L0082
         LDA #$0B
-        JSR L1B15
+        JSR SetGCOL
 
         LDY #$5D
         STY L0080
@@ -1375,7 +1379,7 @@ ORG $1A00
         LDA #$0C
         STA text_address_low
         LDA #$0F
-        JSR L1B15
+        JSR SetGCOL
 
         LDA #$04
         STA L0081
@@ -1433,7 +1437,7 @@ L1C1A = L1C19+1
 
 .L1C3B
         LDA #$0F
-        JSR L1B15
+        JSR SetGCOL
 
         LDA #$06
         STA L0081
@@ -1471,7 +1475,7 @@ L1C1A = L1C19+1
         BNE L1C65
 
         LDA #$0C
-        JSR L1B15
+        JSR SetGCOL
 
         LDA #$08
         STA L0081
@@ -4379,12 +4383,12 @@ L1FE6 = L1FE5+1
         JMP OSBYTE          ; Flush all or just input buffer
 
 ;-------------------------------------------------------------------------
-; 
+; DisplayHighScore
 ;-------------------------------------------------------------------------
 ; On entry  : 
 ; On exit   :
 ;-------------------------------------------------------------------------
-.L2FAE
+.DisplayHighScore
         LDA #$1F
         JSR OSWRCH          ; Move text cursor to x,y
         LDA #$03            
@@ -4430,7 +4434,7 @@ L1FE6 = L1FE5+1
 .L300B
         STY L0076
         STX L0077
-        JSR L2FAE
+        JSR DisplayHighScore
 
         LDY L0076
         LDA L0077
@@ -4442,6 +4446,13 @@ L1FE6 = L1FE5+1
         BCC L300B
         RTS
 
+;-------------------------------------------------------------------------
+; CheckHighScore
+;-------------------------------------------------------------------------
+; On entry  :
+; On exit   : 
+;-------------------------------------------------------------------------
+.CheckHighScore
         LDY #$02
 .L3022
         LDA score1,Y
@@ -4487,10 +4498,16 @@ L1FE6 = L1FE5+1
 
 .L3063
         CPY #$50
-        BNE L3068
+        BNE EnterHighScore
         RTS
 
-.L3068
+;-------------------------------------------------------------------------
+; EnterHighScore
+;-------------------------------------------------------------------------
+; On entry  :
+; On exit   : 
+;-------------------------------------------------------------------------
+.EnterHighScore
         STY L0078
         JSR L0400
 
@@ -4572,7 +4589,11 @@ L1FE6 = L1FE5+1
 .L30DC
         RTS
 
-; Copy one page
+;-------------------------------------------------------------------------
+; Relocate one page of data from 
+; 3000, 3100 and 3200 down to 0400, 0500 and 0600
+;-------------------------------------------------------------------------
+
 .L30DD
         LDY #$00
 .L30DF
@@ -4712,7 +4733,7 @@ L1FE6 = L1FE5+1
         LDY #$5D
         JSR PutText
 
-        JSR L0420
+        JSR CheckHighScore
 
         LDA #$9C
         LDY #$05
@@ -4785,15 +4806,17 @@ L1FE6 = L1FE5+1
 
 .L3200
         EQUB $00,$00,$00,$00,$15,$00,$00,$15
-        EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A
-        EQUB $2A,$3F,$2A,$3F,$2A,$3F,$15,$15
-        EQUB $00,$00,$00,$00,$2A,$00,$00,$2A
-        EQUB $00,$00,$00,$00,$15,$00,$00,$15
-        EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A
-        EQUB $2A,$3F,$2A,$3F,$2A,$3F,$15,$15
-        EQUB $00,$00,$00,$00,$2A,$00,$00,$2A
-        EQUB $00,$00,$00,$00,$00,$00,$00,$00
-        EQUB $00,$00,$00,$00,$00,$00,$00,$00
+        EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A 
+        EQUB $2A,$3F,$2A,$3F,$2A,$3F,$15,$15 
+        EQUB $00,$00,$00,$00,$2A,$00,$00,$2A 
+        EQUB $00,$00,$00,$00,$15,$00,$00,$15 
+        EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A 
+        EQUB $2A,$3F,$2A,$3F,$2A,$3F,$15,$15 
+        EQUB $00,$00,$00,$00,$2A,$00,$00,$2A 
+        EQUB $00,$00,$00,$00,$00,$00,$00,$00 
+        EQUB $00,$00,$00,$00,$00,$00,$00,$00 
+        
+        ; L0650 High score data
         EQUB $10,$00,$00
 
         ; High Scores
@@ -4834,12 +4857,15 @@ L1FE6 = L1FE5+1
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
         EQUB $00,$00,$00,$00
 
-        ; Main entry point at address 4300
+;-------------------------------------------------------------------------
+; Main entry point at address 4300
+; Switch to *Tape and relocate game from 1A00 to 0A00
+;-------------------------------------------------------------------------
 .L3300
         LDA #$8C
         LDX #$00
         LDY #$00
-        JSR OSBYTE          ; Select cassette file system and set speed
+        JSR OSBYTE      ; Select cassette file system and set speed
 
         ; Relocation code from 1A00 to 0A00
         LDA #$00
@@ -4868,12 +4894,11 @@ L1FE6 = L1FE5+1
 
         JMP L30DD
 
+;-------------------------------------------------------------------------
+
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
-
 .L333C
-        EQUB $00,$00
-
-        EQUB $00,$00
+        EQUB $00,$00,$00,$00
 
 .BeebDisEndAddr
 
