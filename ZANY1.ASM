@@ -53,7 +53,7 @@ L0056   = $0056
 L0057   = $0057
 text_address_low        = $0058 
 text_address_high       = $0059 
-L005A   = $005A
+Lives                   = $005A
 L005B   = $005B
 L005C   = $005C
 L005D   = $005D
@@ -712,6 +712,7 @@ ORG $1A00
 .L1796  ; Logical colours
         EQUB $03,$08,$02,$09,$01,$0A,$06,$0B
         EQUB $03,$0C,$02,$0D,$01,$0E,$04,$0F
+;L17A6
         EQUB $00,$00,$00,$00,$00,$00,$20,$0A
         EQUB $00,$17,$02,$16,$13,$36,$04,$14
 
@@ -758,7 +759,7 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 ; XOrd = 0-79, YOrd = 0-255
 ;-------------------------------------------------------------------------
-; On entry  : 
+; On entry  : X and Y contain position
 ; On exit   : 
 ;-------------------------------------------------------------------------
 .CalcXYAddress
@@ -798,7 +799,7 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 ; PlotSpriteEOR16
 ;-------------------------------------------------------------------------
-; On entry  :
+; On entry  : X and Y contain position
 ; On exit   : 
 ;-------------------------------------------------------------------------
 .PlotSpriteEOR16
@@ -810,10 +811,10 @@ ORG $1A00
         JSR CalcXYAddress
 
         PLA
-        TAX                             ; X contains width?
-.L1904
-        LDY Height                      ; Y contains height?
-.L1906
+        TAX                             ; X contains width
+.PlotXLoop
+        LDY Height                      ; Y contains height
+.PlotYLoop
         LDA (sprite_address_low),Y      ; Sprite address
         EOR (screen_address_low),Y
         STA (screen_address_low),Y      ; Screen address
@@ -821,10 +822,10 @@ ORG $1A00
         SEC
         SBC #$08
         TAY
-        BCS L1906
+        BCS PlotYLoop
 
         DEX
-        BMI L1942
+        BMI EndPlotSprite
 
         INC sprite_address_low
         LDY sprite_address_low
@@ -845,7 +846,7 @@ ORG $1A00
         LDY screen_address_low
         TYA
         AND #$07
-        BNE L1904
+        BNE PlotXLoop
 
         DEY
         TYA
@@ -855,10 +856,13 @@ ORG $1A00
         LDA screen_address_high
         ADC #$02
         STA screen_address_high
-        BCC L1904
+        BCC PlotXLoop
 
-.L1942
+.EndPlotSprite
         RTS
+
+;-------------------------------------------------------------------------
+; Start Game
 ;-------------------------------------------------------------------------
 
 .L1943
@@ -874,17 +878,20 @@ ORG $1A00
         LDA #$17
         STA text_address_high
         LDA #$03
-        STA L005A
+        STA Lives
         LDA #$A6
         LDY #$0B
         JSR PutText
 
 ;-------------------------------------------------------------------------
 ; Define logical colour
+; VDU 19, 0-255,p,r,g,b - set logical colour
+;-------------------------------------------------------------------------
+
         LDY #$0F
 .L1960
         LDA #$13
-        JSR OSWRCH          ; Define logical colour
+        JSR OSWRCH      ; Define logical colour
         LDA L1796,Y
         JSR OSWRCH
         DEY
@@ -892,7 +899,7 @@ ORG $1A00
         JSR OSWRCH
         JSR OSWRCH
         JSR OSWRCH
-        JSR OSWRCH
+        JSR OSWRCH      ; p,r,g,b are the same value
         DEY
         BPL L1960
         RTS
@@ -939,6 +946,7 @@ ORG $1A00
         STA text_address_high
         LDA #$04
         JMP OSWRCH          ; Write text at text cursor
+;-------------------------------------------------------------------------
 
 .L19B3
         LDA #$00
@@ -992,6 +1000,7 @@ ORG $1A00
         LDA #$0C
         LDY #$2F
         RTS
+;-------------------------------------------------------------------------
 
 .L1A02
         LDA L0082
@@ -1038,6 +1047,7 @@ ORG $1A00
         STY L0080
         TAX
         RTS
+;-------------------------------------------------------------------------
 
 .L1A44
         JSR L1A02
@@ -1055,31 +1065,33 @@ ORG $1A00
         BEQ L1A5B
 
         LDA #$E1
-        JMP OSWRCH
+        JMP OSWRCH      ; Plot girder character 225
 
 .L1A5B
         RTS
+;-------------------------------------------------------------------------
 
 .L1A5C
         JSR L1A02
 
         LDA #$E2
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot left ladder character 226
 
 .L1A64
         LDA #$08
-        JSR OSWRCH
+        JSR OSWRCH      ; Backspace cursor one character
 
         LDA #$0A
-        JSR OSWRCH          ; Backspace cursor one character
+        JSR OSWRCH      ; Move cursor down one line
 
         LDA #$E3
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot right ladder character 227
 
         DEX
         BNE L1A64
 
         RTS
+;-------------------------------------------------------------------------
 
 .L1A77
         LDY #$36
@@ -1093,18 +1105,18 @@ ORG $1A00
         LDA #$5C
         JSR PutText
 
-        LDX L005A
+        LDX Lives
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot (c) character 228
 
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot (c) character 228
 
 .L1A9C
         LDA #$00
@@ -1174,6 +1186,8 @@ ORG $1A00
         LDA L0053
         JMP BCDtoScreen
 
+;-------------------------------------------------------------------------
+
 .L1AE7
         LDX #$0A
         STX L0055
@@ -1194,12 +1208,11 @@ ORG $1A00
         LDA (L0054),Y
         STY L0057
         TAX
-        JSR L1904
+        JSR PlotXLoop
 
         LDY L0057
         DEY
         BPL L1AED
-
         RTS
 
 ;-------------------------------------------------------------------------
@@ -1307,7 +1320,7 @@ ORG $1A00
         BNE L1B6D
 
         LDA #$E0
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot blank character 224
 
         LDA #$CD
         STA L0082
@@ -1388,7 +1401,7 @@ ORG $1A00
 
         LDA #$E0
 .L1BFF
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot blank character 224
 
         DEX
         BNE L1BFF
@@ -1402,7 +1415,7 @@ ORG $1A00
         JSR L1A06
 
         LDA #$E0
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot blank character 224
 
         LDX L0081
         CPX #$0E
@@ -1419,7 +1432,7 @@ L1C1A = L1C19+1
 
 .L1C22
         LDA #$E1
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot girder character 225
 
 .L1C27
         INC L0080
@@ -1453,7 +1466,7 @@ L1C1A = L1C19+1
 
         LDA #$E0
 .L1C57
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot blank character 224
 
         DEX
         BNE L1C57
@@ -1483,7 +1496,7 @@ L1C1A = L1C19+1
         JSR L1A02
 
         LDA #$E0
-        JSR OSWRCH
+        JSR OSWRCH      ; Plot blank character 224
 
         INC L0080
         DEC L0081
@@ -4212,7 +4225,7 @@ L1FE6 = L1FE5+1
         STY L0076
 .L2EB0
         LDA #$0B
-        JSR OSWRCH
+        JSR OSWRCH      ; Move cursor up one line
 
         LDA L0076
         ASL A
@@ -4239,11 +4252,11 @@ L1FE6 = L1FE5+1
 
         JSR L2F4C
 
-        LDA L005A
+        LDA Lives
         CMP #$03
         BEQ L2EE8
 
-        INC L005A
+        INC Lives
 .L2EE8
         INC L0056
         LDA L0056
@@ -4425,6 +4438,8 @@ L1FE6 = L1FE5+1
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
         EQUB $00,$00,$00,$00,$00,$00,$00
 
+;-------------------------------------------------------------------------
+
 .L3000
         LDA #$38
         LDY #$29
@@ -4512,10 +4527,10 @@ L1FE6 = L1FE5+1
         JSR L0400
 
         LDA #$1F
-        JSR OSWRCH          ; Move text cursor to x,y
+        JSR OSWRCH      ; Move text cursor to x,y
 
         LDA #$11
-        JSR OSWRCH          ; Define text colour
+        JSR OSWRCH      ; Define text colour
 
         LDA L0078
         LSR A
@@ -4527,7 +4542,7 @@ L1FE6 = L1FE5+1
         LDY #$05
         LDA #$7F
 .L3085
-        JSR OSWRCH
+        JSR OSWRCH      ; Backspace and delete 5 characters
 
         DEY
         BNE L3085
@@ -4562,7 +4577,7 @@ L1FE6 = L1FE5+1
         LDA #$7F
         LDX #$00
 .L30BC
-        JSR OSWRCH          ; Backspace and delete
+        JSR OSWRCH          ; Backspace and delete 255 characters ?
 
         DEX
         BNE L30BC
@@ -4703,7 +4718,7 @@ L1FE6 = L1FE5+1
 .L3176
         JSR L2F86
 
-        DEC L005A
+        DEC Lives
         BEQ L317E
 
         RTS
