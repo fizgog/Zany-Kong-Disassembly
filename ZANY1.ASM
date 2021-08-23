@@ -258,15 +258,80 @@ ORG $1A00
 
         EQUB $0A,$0C,$0C,$0C,$11,$07,$1C,$06
         EQUB $0E,$1D,$05,$1C,$00,$00,$00,$00
-        EQUB $00,$FF,$4B,$11,$FF,$FF,$10,$28
-        EQUB $45,$82,$FF,$FF,$F0,$F0,$40,$A0
-        EQUB $10,$00,$F0,$F0,$00,$00,$00,$00
-        EQUB $00,$42,$42,$42,$7E,$42,$42,$42
-        EQUB $7E,$42,$42,$42,$18,$3C,$18,$3C
-        EQUB $5A,$3C,$24,$66,$81,$42,$24,$18
-        EQUB $18,$24,$42,$81,$FF,$FF,$08,$08
-        EQUB $08,$08,$FF,$FF,$30,$48,$94,$94
-        EQUB $A4,$A4,$48,$30
+        EQUB $00,$FF,$4B,$11
+
+        ; VDU 224
+        EQUB $FF,$FF,$10,$28,$45,$82,$FF,$FF    ; ########
+                                                ; ########
+                                                ; ...#....
+                                                ; ..#.#...
+                                                ; .#...#.#
+                                                ; #.....#.
+                                                ; ########
+                                                ; ########
+        ; VDU 225
+        EQUB $F0,$F0,$40,$A0,$10,$00,$F0,$F0    ; ####....
+                                                ; ####....
+                                                ; .#......
+                                                ; #.#.....
+                                                ; ...#....
+                                                ; ........
+                                                ; ####....
+                                                ; ####....
+        ; VDU 226
+        EQUB $00,$00,$00,$00,$00,$42,$42,$42    ; ........
+                                                ; ........
+                                                ; ........
+                                                ; ........
+                                                ; ........
+                                                ; .#....#.
+                                                ; .#....#.
+                                                ; .#....#.
+        ; VDU 227
+        EQUB $7E,$42,$42,$42,$7E,$42,$42,$42    ; .######.
+                                                ; .#....#.
+                                                ; .#....#.
+                                                ; .#....#.
+                                                ; .######.
+                                                ; .#....#.
+                                                ; .#....#.
+                                                ; .#....#.
+        ; VDU 228
+        EQUB $18,$3C,$18,$3C,$5A,$3C,$24,$66    ; ...##...
+                                                ; ..####..
+                                                ; ...##...
+                                                ; ..####..
+                                                ; .#.##.#.
+                                                ; ..####.
+                                                ; .##..##.
+        ; VDU 229
+        EQUB $81,$42,$24,$18,$18,$24,$42,$81    ; #......#
+                                                ; .#....#.
+                                                ; ..#..#..
+                                                ; ...##...
+                                                ; ...##...
+                                                ; ..#..#..
+                                                ; .#....#.
+                                                ; #......#
+        ; VDU 230
+        EQUB $FF,$FF,$08,$08,$08,$08,$FF,$FF    ; ########
+                                                ; ########
+                                                ; ....#...
+                                                ; ....#...
+                                                ; ....#...
+                                                ; ....#...
+                                                ; ########
+                                                ; ########
+
+        ; VDU 231
+        EQUB $30,$48,$94,$94,$A4,$A4,$48,$30    ; ..##....
+                                                ; .#..#...
+                                                ; #..#.#..
+                                                ; #..#.#..
+                                                ; #.#..#..
+                                                ; #.#..#..
+                                                ; .#..#...
+                                                ; ..##....
 
 .L0C40
         EQUB $EB,$BA,$A3,$72,$5B,$2A,$00,$00
@@ -1065,7 +1130,7 @@ ORG $1A00
         BEQ L1A5B
 
         LDA #$E1
-        JMP OSWRCH      ; Plot girder character 225
+        JMP OSWRCH      ; Plot right hand girder character 225
 
 .L1A5B
         RTS
@@ -1075,7 +1140,7 @@ ORG $1A00
         JSR L1A02
 
         LDA #$E2
-        JSR OSWRCH      ; Plot left ladder character 226
+        JSR OSWRCH      ; Plot top ladder section character 226
 
 .L1A64
         LDA #$08
@@ -1085,7 +1150,7 @@ ORG $1A00
         JSR OSWRCH      ; Move cursor down one line
 
         LDA #$E3
-        JSR OSWRCH      ; Plot right ladder character 227
+        JSR OSWRCH      ; Plot bottom ladder section character 227
 
         DEX
         BNE L1A64
@@ -1110,13 +1175,13 @@ ORG $1A00
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH      ; Plot (c) character 228
+        JSR OSWRCH      ; Plot life man character 228
 
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH      ; Plot (c) character 228
+        JSR OSWRCH      ; Plot life man character 228
 
 .L1A9C
         LDA #$00
@@ -1415,7 +1480,7 @@ ORG $1A00
         JSR L1A06
 
         LDA #$E0
-        JSR OSWRCH      ; Plot blank character 224
+        JSR OSWRCH      ; Plot left hand girder character 224
 
         LDX L0081
         CPX #$0E
@@ -1432,7 +1497,7 @@ L1C1A = L1C19+1
 
 .L1C22
         LDA #$E1
-        JSR OSWRCH      ; Plot girder character 225
+        JSR OSWRCH      ; Plot right hand girder character 225
 
 .L1C27
         INC L0080
@@ -1466,7 +1531,7 @@ L1C1A = L1C19+1
 
         LDA #$E0
 .L1C57
-        JSR OSWRCH      ; Plot blank character 224
+        JSR OSWRCH      ; Plot left hand girder character 224
 
         DEX
         BNE L1C57
@@ -1496,7 +1561,7 @@ L1C1A = L1C19+1
         JSR L1A02
 
         LDA #$E0
-        JSR OSWRCH      ; Plot blank character 224
+        JSR OSWRCH      ; Plot left hand girder character 224
 
         INC L0080
         DEC L0081
@@ -3511,13 +3576,12 @@ L1FE6 = L1FE5+1
         STA sprite_address_high
         LDA #$40
         BNE L2A90
-       CLI
-.L2AA7
-        ROL L0020
+        CLI
 
-        ; DATA ???????
-        EQUB $43,$19
-
+.L2AA7  ; DATA ???????
+        EQUB $26
+.L2AA8
+        JSR L1943
 .L2AAA
         JSR L197F
         JSR L2F1F
@@ -4758,7 +4822,7 @@ L1FE6 = L1FE5+1
 
 .L31AC
         LDA #$78                ; %01111000
-        LDX L0B70               ; ???
+        LDX PlaySound               ; ???
         CPX #$60                ; %01100000
         BNE L31B7
 
@@ -4781,28 +4845,28 @@ L1FE6 = L1FE5+1
         JSR OSBYTE              ; Read key within time limit
 
         INX
-        BNE L31D8
+        BNE S_not_pressed       ; S not pressed
 
-        LDA L0B70
+        LDA PlaySound
         EOR #$C9                ; %11001001
-        STA L0B70               ; Sound On / Off flag
+        STA PlaySound           ; Sound On / Off flag - Toggle 0B70 between RTS and LDA
         BNE L31AC
 
-.L31D8
+.S_not_pressed
         LDA #$81
         LDY #$FF
         LDX #keyCodeSPACE       ;
         JSR OSBYTE              ; Read key within time limit
 
         INX
-        BNE L31EC
+        BNE SPACE_not_presse    ; SPACE not pressed
 
         LDA L007B
         ORA #$80
         STA L007B
         BNE L31FD
 
-.L31EC
+.SPACE_not_pressed
         LDA #$80
         LDX #$00
         JSR OSBYTE              ; Read ADC channel/fire buttons/last coversion
