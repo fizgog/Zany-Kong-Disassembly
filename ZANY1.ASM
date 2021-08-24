@@ -17,31 +17,10 @@ keyCodeSPACE    = &9D
 
 ORG 0
 
-L0000   = $0000
-L0001   = $0001
-L0002   = $0002
-L0003   = $0003
-L0005   = $0005
-L0007   = $0007
-L000A   = $000A
-L000B   = $000B
 L000D   = $000D
 L000E   = $000E
 L000F   = $000F
 L0010   = $0010
-L0015   = $0015
-L001F   = $001F
-L0020   = $0020
-L0021   = $0021
-L0022   = $0022
-L0024   = $0024
-L0028   = $0028
-L0029   = $0029
-L0038   = $0038
-L003A   = $003A
-L003F   = $003F
-L0046   = $0046
-L0049   = $0049
 L004F   = $004F
 score1                  = $0050
 score2                  = $0051
@@ -49,13 +28,13 @@ score3                  = $0052
 L0053   = $0053
 L0054   = $0054
 L0055   = $0055
-L0056   = $0056
+Level   = $0056
 L0057   = $0057
 text_address_low        = $0058 
 text_address_high       = $0059 
 Lives                   = $005A
 L005B   = $005B
-L005C   = $005C
+last_clock_value   = $005C
 L005D   = $005D
 L005E   = $005E
 L005F   = $005F
@@ -101,9 +80,6 @@ L008C   = $008C
 L008D   = $008D
 L008E   = $008E
 L008F   = $008F
-L00C9   = $00C9
-L00E9   = $00E9
-L00FF   = $00FF
 
 ORG &400
 
@@ -220,7 +196,7 @@ ORG $1A00
         EQUS " YNAZ"
         EQUB $01
 
-.L0B68
+.clock_value
         EQUB $A3,$93,$14,$00,$00,$1F,$28,$22
 
 ;-------------------------------------------------------------------------
@@ -242,23 +218,26 @@ ORG $1A00
         EQUB $18,$11,$1F                                        ; Tab(17,24)
         EQUS "FF"                                               ; Sound O[FF] text
         EQUB $18,$11,$1F                                        ; Tab(17,24)
-        EQUS "O: 'S' dnuoS"
+        EQUS "O: 'S' dnuoS"                                     ; 'Sound 'S' :O'
         EQUB $18,$05,$1F                                        ; Tab(5,24)
-        EQUS ".yalp  ot NOTTUB KCITSYOJ  ro RAB ECAPS sserP"
+        EQUS ".yalp  ot NOTTUB KCITSYOJ  ro RAB ECAPS sserP"    ; 'Press SPACE BAR or JOYSTICK BUTTON to play.
         EQUB $1D,$00,$1F                                        ; Tab(0,29)
-        EQUS "? bmilc uoy nac"
+        EQUS "? bmilc uoy nac"                                  ; 'can you climb ?'
         EQUB $1B,$04,$1F                                        ; Tab(4,27)
-        EQUS "hgih woH"
+        EQUS "hgih woH"                                         ; 'How high'
         EQUB $1A,$04,$1F                                        ; Tab(4,26)
         EQUB $0C                                                ; Clear text area
         EQUB $1A                                                ; Restore default windows
-        EQUS "revO "
+        
+        EQUS "revO "                                            ; 'Over'
         EQUB $0A                                                ; Move cursor down one line
-        EQUS " emaG "
-
-        EQUB $0A,$0C,$0C,$0C,$11,$07,$1C,$06
-        EQUB $0E,$1D,$05,$1C,$00,$00,$00,$00
-        EQUB $00,$FF,$4B,$11
+        EQUS " emaG "                                           ; 'Game'
+        EQUB $0A                                                ; Move cursor down one line
+        EQUB $0C                                                ; Clear text area
+        EQUB $0C,$0C,$11,$07,$1C                                ; Define text window
+        
+        EQUB $06,$0E,$1D,$05,$1C,$00,$00,$00
+        EQUB $00,$00,$FF,$4B,$11
 
         ; VDU 224
         EQUB $FF,$FF,$10,$28,$45,$82,$FF,$FF    ; ########
@@ -762,17 +741,22 @@ ORG $1A00
         EQUB $0C,$7D,$00,$0C,$35,$00,$0C,$95
         EQUB $0B,$0C,$4D,$0B,$08,$09,$3B,$02
         EQUB $DA,$3C,$05,$08,$00,$07,$BF,$00
-        EQUB $00,$09,$1F,$00,$10,$1F,$3D,$4C
-        EQUB $02,$0A,$1F,$30,$30,$30,$38,$03
-        EQUB $0F,$1F
-
-        EQUS ":erocS"
-
-        EQUB $00,$02,$1F,$00,$00,$00,$28,$01
-        EQUB $19,$00,$44,$00,$00,$01,$19,$00
-        EQUB $00,$FE,$D0,$01,$19,$FF,$D8,$00
-        EQUB $00,$01,$19,$03,$9C,$04,$DC,$04
-        EQUB $19,$0C,$03,$12,$0C
+        EQUB $00,$09,$1F,$00,$10,$1F
+        
+        ; 175F - 1795
+        EQUS "=L"                       ; 'L='
+        EQUB $02,$0A,$1F                ; Move text cursor to x,y
+        EQUB $30,$30,$30,$38            ; '8000'
+        EQUB $03,$0F,$1F                ; Move text cursor to x,y
+        EQUS ":erocS"                   ; 'Score:'
+        EQUB $00,$02,$1F                ; Move text cursor to x,y
+        EQUB $00,$00,$00,$28,$01,$19    ; Plot K,x,y
+        EQUB $00,$44,$00,$00,$01,$19    ; Plot K,x,y
+        EQUB $00,$00,$FE,$D0,$01,$19    ; Plot K,x,y    (Plot yellow bonus box)
+        EQUB $FF,$D8,$00,$00,$01,$19    ; Plot K,x,y
+        EQUB $03,$9C,$04,$DC,$04,$19    ; Plot K,x,y
+        EQUB $0C,$03,$12                ; Define graphics colour (Exclusive-OR the specified colour with that already there)
+        EQUB $0C                        ; Clear text area
 
 .L1796  ; Logical colours
         EQUB $03,$08,$02,$09,$01,$0A,$06,$0B
@@ -939,11 +923,11 @@ ORG $1A00
         BNE L1947
 
         INX
-        STX L0056
+        STX Level               ; Start on level 1
         LDA #$17
         STA text_address_high
         LDA #$03
-        STA Lives
+        STA Lives               ; Start with 3 lives
         LDA #$A6
         LDY #$0B
         JSR PutText
@@ -1160,14 +1144,14 @@ ORG $1A00
 
 .L1A77
         LDY #$36
-        LDA #$5F
-        JSR PutText
+        LDA #$5F                ; text_address = $175F
+        JSR PutText             ; Plot Score:, L=, 8000 and bonus box
 
-        LDA L0056
-        JSR BCDtoScreen
+        LDA Level
+        JSR BCDtoScreen         ; Print Level value
 
         LDY #$02
-        LDA #$5C
+        LDA #$5C                ; text address = $175C
         JSR PutText
 
         LDX Lives
@@ -1175,13 +1159,13 @@ ORG $1A00
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH      ; Plot life man character 228
+        JSR OSWRCH              ; Plot life man character 228
 
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH      ; Plot life man character 228
+        JSR OSWRCH              ; Plot life man character 228
 
 .L1A9C
         LDA #$00
@@ -1196,7 +1180,7 @@ ORG $1A00
         LDX #$02
 .L1AAC
         LDA score1,X
-        JSR BCDtoScreen
+        JSR BCDtoScreen         ; Print Score value
 
         DEX
         BPL L1AAC
@@ -2430,7 +2414,7 @@ L1FE6 = L1FE5+1
         BIT L0086
         BMI L2473
 
-        BVS     L2473
+        BVS L2473
 
         LDA L0082
         CMP #$04
@@ -2804,28 +2788,28 @@ L1FE6 = L1FE5+1
         LDA L0C66,Y
         STA sprite_address_low
         LDA L0C5D,Y
-        STA sprite_address_high               ; Sprite Address $????
+        STA sprite_address_high         ; Sprite Address $????
         LDA #$0A
         ADC L0081
         TAY
         LDX L0080
         LDA #$05
-        JSR PlotSpriteEOR       ; Sprite 6 wide
+        JSR PlotSpriteEOR               ; Sprite 6 wide
 
         LDY L0057
         LDA L0C54,Y
         STA sprite_address_low
         LDA L0C5D,Y
-        STA sprite_address_high               ; Sprite Address $????
+        STA sprite_address_high         ; Sprite Address $????
         LDA #$09
         LDX L0080
         LDY L0081
-        JMP PlotSpriteEOR       ; Sprite 10 wide
+        JMP PlotSpriteEOR               ; Sprite 10 wide
 
 .L267B
         LDA #$80
         LDX #$00
-        JSR OSBYTE          ; Read ADC channel/fire buttons/last conversion
+        JSR OSBYTE                      ; Read ADC channel/fire buttons/last conversion
 
         TXA
         LDX #$FF
@@ -2837,7 +2821,7 @@ L1FE6 = L1FE5+1
         STX L0076
         LDA #$80
         LDX #$02
-        JSR OSBYTE          ; Read ADC channel/fire buttons/last conversion
+        JSR OSBYTE                      ; Read ADC channel/fire buttons/last conversion
 
         LDX #$00
         STX L0078
@@ -2858,7 +2842,7 @@ L1FE6 = L1FE5+1
         STX L0078
 .L26A9
         LDX #$01
-        JSR OSBYTE          ;          ; Read ADC channel/fire buttons/last conversion
+        JSR OSBYTE                      ; Read ADC channel/fire buttons/last conversion
 
 
         LDX #$00
@@ -3133,9 +3117,9 @@ L1FE6 = L1FE5+1
 .L2821
         STA sprite_address_low
         LDA #$1F
-        STA sprite_address_high               ; Sprite Address $1F??
+        STA sprite_address_high         ; Sprite Address $1F??
         LDA #$0B
-        JMP PlotSpriteEOR       ; Sprite 12 wide
+        JMP PlotSpriteEOR               ; Sprite 12 wide
 
 .L282C
         CLC
@@ -3464,11 +3448,11 @@ L1FE6 = L1FE5+1
         EOR #$A0
         STA sprite_address_low
         LDA #$1C
-        STA sprite_address_high               ; Sprite Address $1CA0
+        STA sprite_address_high         ; Sprite Address $1CA0
         LDA #$28
         STA Height
         LDA #$0B
-        JSR PlotSpriteEOR       ; Sprite 12 wide
+        JSR PlotSpriteEOR               ; Sprite 12 wide
 
         LDA #$18
         STA Height
@@ -3478,9 +3462,9 @@ L1FE6 = L1FE5+1
         PLA
         STA sprite_address_low
         LDA #$11
-        STA sprite_address_high               ; Sprite Address $11??
+        STA sprite_address_high         ; Sprite Address $11??
         LDA #$0B
-        JMP PlotSpriteEOR       ; Sprite 12 wide
+        JMP PlotSpriteEOR               ; Sprite 12 wide
 
 .L2A1E
         LDX L0061
@@ -3543,12 +3527,12 @@ L1FE6 = L1FE5+1
         LDA #$11
         STA sprite_address_high
         LDA #$80
-        STA sprite_address_low               ; Sprite Address $1180
+        STA sprite_address_low          ; Sprite Address $1180
         LDA #$78
         STA Height
         LDA #$1F
 .L2A7A
-        JSR PlotSpriteEOR       ; Sprite 32 wide
+        JSR PlotSpriteEOR               ; Sprite 32 wide
         LDA #$18
         STA Height
         RTS
@@ -3589,7 +3573,7 @@ L1FE6 = L1FE5+1
         STX L0080
         LDY #$E7
         STY L0081
-        LDA L0056
+        LDA Level
         ASL A
         ASL A
         STA L0057
@@ -3621,7 +3605,7 @@ L1FE6 = L1FE5+1
 
         PLA
         STA L005E
-        JSR L2F06
+        JSR TimerDelay
 
         JSR L26C5
 
@@ -3633,7 +3617,7 @@ L1FE6 = L1FE5+1
 
         PLA
         STA L005E
-        JSR L2F06
+        JSR TimerDelay
 
         JSR L225E
 
@@ -3734,7 +3718,7 @@ L1FE6 = L1FE5+1
         STX L0080
         LDY #$E4
         STY L0081
-        LDA L0056
+        LDA Level
         ASL A
         CMP #$09
         BCC L2B93
@@ -3770,11 +3754,11 @@ L1FE6 = L1FE5+1
 
         JSR L26C5
 
-        JSR L2F06
+        JSR TimerDelay
 
         JSR L1FD0
 
-        JSR L2F06
+        JSR TimerDelay
 
         LDA L0080
         AND #$FE
@@ -3941,8 +3925,8 @@ L1FE6 = L1FE5+1
         STA L006E
         JSR L21B5
 
-        LDA L0056
-        CMP #$03
+        LDA Level
+        CMP #$03                ; Springs section?
         BCC L2CC3
 
         LDA #$02
@@ -3968,7 +3952,7 @@ L1FE6 = L1FE5+1
 
         JSR L216D
 
-        JSR L2F06
+        JSR TimerDelay
 
         JSR L2123
 
@@ -3976,7 +3960,7 @@ L1FE6 = L1FE5+1
 
         JSR L216D
 
-        JSR L2F06
+        JSR TimerDelay
 
         LDA L0080
         AND #$FE
@@ -4096,7 +4080,7 @@ L1FE6 = L1FE5+1
         LDY #$E4
         STY L0081
         STX L0066
-        LDA L0056
+        LDA Level
         ASL A
         ADC #$04
         CMP #$09
@@ -4116,11 +4100,11 @@ L1FE6 = L1FE5+1
         LDA #$0A
         JSR L2EF9
 
-        JSR L2F06
+        JSR TimerDelay
 
         JSR L26C5
 
-        JSR L2F06
+        JSR TimerDelay
 
         LDY L0089
         BEQ L2DF5
@@ -4244,9 +4228,9 @@ L1FE6 = L1FE5+1
         LDA #$0C
         STA sprite_address_high
         LDA #$E0
-        STA sprite_address_low               ; Sprite Address $0CE0
+        STA sprite_address_low          ; Sprite Address $0CE0
         LDA #$07
-        JSR PlotSpriteEOR       ; Sprite 8 wide
+        JSR PlotSpriteEOR               ; Sprite 8 wide
 
         DEC L0066
 .L2E7A
@@ -4289,7 +4273,7 @@ L1FE6 = L1FE5+1
         STY L0076
 .L2EB0
         LDA #$0B
-        JSR OSWRCH      ; Move cursor up one line
+        JSR OSWRCH                      ; Move cursor up one line
 
         LDA L0076
         ASL A
@@ -4308,7 +4292,7 @@ L1FE6 = L1FE5+1
         LDA #$95
         STA L0B34
         LDA #$1A
-        JSR OSWRCH          ; Restore default windows
+        JSR OSWRCH                      ; Restore default windows
 
         LDA #$A2
         LDY #$05
@@ -4317,18 +4301,18 @@ L1FE6 = L1FE5+1
         JSR L2F4C
 
         LDA Lives
-        CMP #$03
+        CMP #$03                        ; Max 3 lives?
         BEQ L2EE8
 
-        INC Lives
+        INC Lives                       ; Increment lives
 .L2EE8
-        INC L0056
-        LDA L0056
-        CMP #$08
+        INC Level                       ; Increment level
+        LDA Level
+        CMP #$08                        ; Max 8 levels?
         BCC L2EF4
 
-        LDA #$01
-        STA L0056
+        LDA #$01                        ; Reset level back to 1
+        STA Level
 .L2EF4
         JMP L2AAB
 
@@ -4344,23 +4328,31 @@ L1FE6 = L1FE5+1
         STA L0054
         RTS
 
-.L2F06
+;-------------------------------------------------------------------------
+; TimerDelay
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   :
+;-------------------------------------------------------------------------
+
+.TimerDelay
         LDA #$01
         LDY #$0B
         LDX #$68
-        JSR OSWORD          ; Read system clock
+        JSR OSWORD                      ; Read system clock and store into clock_value $0B68
 
-        LDA L0B68
+        LDA clock_value
         SEC
         SBC #$05
-        CMP L005C
-        BNE L2F06
+        CMP last_clock_value            ; last clock value
+        BNE TimerDelay
 
-        LDX L0B68
-        STX L005C
+        LDX clock_value
+        STX last_clock_value
         RTS
-
-        ; Initialise ??
+;-------------------------------------------------------------------------
+; Initialise ??
+;-------------------------------------------------------------------------
 .L2F1F
         LDX #$00
         STX L005E
@@ -4412,6 +4404,8 @@ L1FE6 = L1FE5+1
 .L2F6B
         RTS
 
+;-------------------------------------------------------------------------
+
 .L2F6C
         LDY #$05
         JSR L1AE7
@@ -4425,7 +4419,7 @@ L1FE6 = L1FE5+1
 .L2F7B
         JSR L25FB
 
-        JSR L2F06
+        JSR TimerDelay
 
         LDX #$30
         JMP PlaySound
@@ -4467,16 +4461,16 @@ L1FE6 = L1FE5+1
 ;-------------------------------------------------------------------------
 .DisplayHighScore
         LDA #$1F
-        JSR OSWRCH          ; Move text cursor to x,y
+        JSR OSWRCH                      ; Move text cursor to x,y
         LDA #$03            
-        JSR OSWRCH          ; X position
+        JSR OSWRCH                      ; X position
         TYA
-        JSR OSWRCH          ; Y position
+        JSR OSWRCH                      ; Y position
 
         LDY #$02
 .L2FBE
         LDA L0650,X
-        JSR BCDtoScreen
+        JSR BCDtoScreen                 ; Print scores
         DEX
         DEY
         BPL L2FBE
@@ -4484,26 +4478,29 @@ L1FE6 = L1FE5+1
         LDA #$20
         JSR OSWRCH
         JSR OSWRCH
-        JSR OSWRCH          ; Print 3 spaces
+        JSR OSWRCH                      ; Print 3 spaces
+
         LDY #$05
         INX
 .L2FD6
         LDA L0653,X
-        JSR OSWRCH
+        JSR OSWRCH                      ; Print names
 
         INX
         DEY
         BNE L2FD6
         RTS
 ;-------------------------------------------------------------------------
-
+        
+        ; Data ?
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
         EQUB $00,$00,$00,$00,$00,$00,$00
 
 ;-------------------------------------------------------------------------
-
+; Display hiscore on main screen
+;-------------------------------------------------------------------------
 .L3000
         LDA #$38
         LDY #$29
@@ -4783,50 +4780,52 @@ L1FE6 = L1FE5+1
         JSR L2F86
 
         DEC Lives
-        BEQ L317E
+        BEQ GameOver
 
         RTS
 
 ;-------------------------------------------------------------------------
-
-.L317E
+; Game Over
+;-------------------------------------------------------------------------
+.GameOver
         LDA #$0B
         STA text_address_high
-        LDA #$E0
+        LDA #$E0                        ; text address 0BE0
         LDY #$12
-        JSR PutText
+        JSR PutText                     ; Display Game Over
 
         JSR L2F4C
 
         BNE L3191
 
         ; This is location 058E when data is relocated
-        JSR L1943
+        JSR L1943 ; L058E
 
 .L3191
         LDX #$FF
         TXS
         LDA #$0B
-        STA text_address_high               ; Text Hi byte address
-        LDA #$82
+        STA text_address_high           ; Text Hi byte address
+        LDA #$82                        ; text address $0B82
         LDY #$5D
-        JSR PutText
+        JSR PutText                     ; Sound, How high can you try, Press SPACE.....
 
-        JSR CheckHighScore
+        JSR CheckHighScore              ; 
 
         LDA #$9C
         LDY #$05
         JSR L1AE7
 
-        JSR L0400
+        ; This is location 0400 when data is relocated
+        JSR L3000 ; L0400               ; Display High scores on main screen
 
 .L31AC
-        LDA #$78                ; %01111000
-        LDX PlaySound               ; ???
-        CPX #$60                ; %01100000
+        LDA #$78                        ; %01111000
+        LDX PlaySound                   ;
+        CPX #$60                        ; %01100000
         BNE L31B7
 
-        LDA #$7D                ; %01111101
+        LDA #$7D                        ; %01111101
 .L31B7
         LDY #$04
         JSR PutText
