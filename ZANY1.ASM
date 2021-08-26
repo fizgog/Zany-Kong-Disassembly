@@ -25,7 +25,7 @@ L004F   = $004F
 score1                  = $0050
 score2                  = $0051
 score3                  = $0052
-L0053   = $0053
+bonus_time              = $0053
 L0054   = $0054
 L0055   = $0055
 Level   = $0056
@@ -34,7 +34,7 @@ text_address_low        = $0058
 text_address_high       = $0059 
 Lives                   = $005A
 L005B   = $005B
-last_clock_value   = $005C
+last_clock_value        = $005C
 L005D   = $005D
 L005E   = $005E
 L005F   = $005F
@@ -59,27 +59,45 @@ screen_address_high     = $0073
 sprite_address_low      = $0074
 sprite_address_high     = $0075
 L0076   = $0076
-L0077   = $0077
+L0077   = $0077 ; Fire sprite ?
 L0078   = $0078
 L0079   = $0079
 L007A   = $007A
 L007B   = $007B
 L0080   = $0080
 L0081   = $0081
-L0082   = $0082
-L0083   = $0083
-L0084   = $0084
-L0085   = $0085
-L0086   = $0086
-L0087   = $0087
-L0088   = $0088
-L0089   = $0089
-L008A   = $008A
+sprite_animation        = $0082 ; Sprite animation 
+                                ; 0 left 1
+                                ; 1 left 2
+                                ; 2 right 1
+                                ; 3 right 2
+                                ; 4 up/down 1
+                                ; 5 up/down 2
+                                ; 6 jump left
+                                ; 7 jump right
+
+jump_timer              = $0083 ; Jump timer (Start at 12 and counts down to 0 in hex)
+
+jump_animation          = $0084 ; Jump sprite left 0,1 right 2,3
+hammer_timer            = $0085 ; Timer for hammer counts down from FF to 0
+
+L0086   = $0086 ; Up /Down y axis or ypos (sequence is 00 40 80 C0)
+
+player_falling_down     = $0087 ; Falling down
+
+jump_flag               = $0088 ; Jumping?
+                                ; FF when jumping left
+                                ; 01 when jumping right 
+                                ; 00 when standing jump
+
+current_platform        = $0089 ; Current platform player is on
+
+L008A   = $008A ; Set to 0 to when jumping
 L008B   = $008B
 L008C   = $008C
 L008D   = $008D
 L008E   = $008E
-L008F   = $008F
+L008F   = $008F ; Write FF when died and 1E when alive
 
 ORG &400
 
@@ -741,22 +759,25 @@ ORG $1A00
         EQUB $0C,$7D,$00,$0C,$35,$00,$0C,$95
         EQUB $0B,$0C,$4D,$0B,$08,$09,$3B,$02
         EQUB $DA,$3C,$05,$08,$00,$07,$BF,$00
-        EQUB $00,$09,$1F,$00,$10,$1F
+        EQUB $00,$09,$1F
+
+        ; 175C - 175E
+        EQUB $00,$10,$1F                        ; Move text cursor to 9,0
         
         ; 175F - 1795
-        EQUS "=L"                       ; 'L='
-        EQUB $02,$0A,$1F                ; Move text cursor to x,y
-        EQUB $30,$30,$30,$38            ; '8000'
-        EQUB $03,$0F,$1F                ; Move text cursor to x,y
-        EQUS ":erocS"                   ; 'Score:'
-        EQUB $00,$02,$1F                ; Move text cursor to x,y
-        EQUB $00,$00,$00,$28,$01,$19    ; Plot K,x,y
-        EQUB $00,$44,$00,$00,$01,$19    ; Plot K,x,y
-        EQUB $00,$00,$FE,$D0,$01,$19    ; Plot K,x,y    (Plot yellow bonus box)
-        EQUB $FF,$D8,$00,$00,$01,$19    ; Plot K,x,y
-        EQUB $03,$9C,$04,$DC,$04,$19    ; Plot K,x,y
-        EQUB $0C,$03,$12                ; Define graphics colour (Exclusive-OR the specified colour with that already there)
-        EQUB $0C                        ; Clear text area
+        EQUS "=L"                               ; 'L='
+        EQUB $02,$0A,$1F                        ; Move text cursor to 10,2
+        EQUB $30,$30,$30,$38                    ; '8000'
+        EQUB $03,$0F,$1F                        ; Move text cursor to 15,3
+        EQUS ":erocS"                           ; 'Score:'
+        EQUB $00,$02,$1F                        ; Move text cursor to 2,0
+        EQUB $00,$00,$00,$28,$01,$19            ; Plot K,x,y
+        EQUB $00,$44,$00,$00,$01,$19            ; Plot K,x,y
+        EQUB $00,$00,$FE,$D0,$01,$19            ; Plot K,x,y    (Plot yellow bonus box)
+        EQUB $FF,$D8,$00,$00,$01,$19            ; Plot K,x,y
+        EQUB $03,$9C,$04,$DC,$04,$19            ; Plot K,x,y
+        EQUB $0C,$03,$12                        ; Define graphics colour (Exclusive-OR the specified colour with that already there)
+        EQUB $0C                                ; Clear text area
 
 .L1796  ; Logical colours
         EQUB $03,$08,$02,$09,$01,$0A,$06,$0B
@@ -923,12 +944,12 @@ ORG $1A00
         BNE L1947
 
         INX
-        STX Level               ; Start on level 1
+        STX Level                               ; Start on level 1
         LDA #$17
         STA text_address_high
         LDA #$03
-        STA Lives               ; Start with 3 lives
-        LDA #$A6
+        STA Lives                               ; Start with 3 lives
+        LDA #$A6                                ; text address is 17A6
         LDY #$0B
         JSR PutText
 
@@ -1004,7 +1025,7 @@ ORG $1A00
         LDX #$50
         STX L0080
         LDA #$08
-        STA L0082
+        STA sprite_animation
         LDA #$0F
         JSR SetGCOL
 
@@ -1052,7 +1073,7 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 
 .L1A02
-        LDA L0082
+        LDA sprite_animation
         STA text_address_low
 .L1A06
         LDY L0080
@@ -1103,7 +1124,7 @@ ORG $1A00
 
 .L1A47
         LDY #$07
-        LDA #$00
+        LDA #$00                                ; text address is 1700?
         JSR PutText
 
 .L1A4E
@@ -1144,28 +1165,28 @@ ORG $1A00
 
 .L1A77
         LDY #$36
-        LDA #$5F                ; text_address = $175F
-        JSR PutText             ; Plot Score:, L=, 8000 and bonus box
+        LDA #$5F                                ; text_address = $175F
+        JSR PutText                             ; Plot Score:, L=, 8000 and bonus box
 
         LDA Level
-        JSR BCDtoScreen         ; Print Level value
+        JSR BCDtoScreen                         ; Print Level value
 
         LDY #$02
-        LDA #$5C                ; text address = $175C
-        JSR PutText
+        LDA #$5C                                ; text address = $175C
+        JSR PutText                             ; Move text cursor to 9,0
 
         LDX Lives
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH              ; Plot life man character 228
+        JSR OSWRCH                              ; Plot life man character 228
 
         DEX
         BEQ L1A9C
 
         LDA #$E4
-        JSR OSWRCH              ; Plot life man character 228
+        JSR OSWRCH                              ; Plot life man character 228
 
 .L1A9C
         LDA #$00
@@ -1180,7 +1201,7 @@ ORG $1A00
         LDX #$02
 .L1AAC
         LDA score1,X
-        JSR BCDtoScreen         ; Print Score value
+        JSR BCDtoScreen                         ; Print Score value
 
         DEX
         BPL L1AAC
@@ -1212,7 +1233,7 @@ ORG $1A00
 ;-------------------------------------------------------------------------
 
 .L1AC9
-        LDA L0053
+        LDA bonus_time
         BNE L1ACE
 
         RTS
@@ -1226,14 +1247,14 @@ ORG $1A00
         LDX #$FF
         STX L008B
 .L1AD8
-        STA L0053
+        STA bonus_time
         CLD
         LDY #$02
         LDA #$68
         JSR PutText
 
-        LDA L0053
-        JMP BCDtoScreen
+        LDA bonus_time
+        JMP BCDtoScreen                         ; Print Bonus Time
 
 ;-------------------------------------------------------------------------
 
@@ -1353,7 +1374,7 @@ ORG $1A00
         STA L1700
         STA L1701
         LDA #$BE
-        STA L0082
+        STA sprite_animation
 .L1B6D
         JSR L1A02
 
@@ -1372,7 +1393,7 @@ ORG $1A00
         JSR OSWRCH      ; Plot blank character 224
 
         LDA #$CD
-        STA L0082
+        STA sprite_animation
         LDX #$2C
         STX L0080
         LDA #$0F
@@ -1419,7 +1440,7 @@ ORG $1A00
         LDA #$18
         STA text_address_high
         LDA #$0C
-        STA L0082
+        STA sprite_animation
         LDA #$0B
         JSR SetGCOL
 
@@ -1489,7 +1510,7 @@ L1C1A = L1C19+1
         BNE L1C0D
 
         LDA text_address_low
-        STA L0082
+        STA sprite_animation
         LDA #$0C
         JSR L19EF
 
@@ -1507,7 +1528,7 @@ L1C1A = L1C19+1
         STA text_address_high
         LDA #$70
         STA text_address_low
-        STA L0082
+        STA sprite_animation
         LDY #$4F
         STY L0080
 .L1C52
@@ -2149,7 +2170,7 @@ L1FE6 = L1FE5+1
         EQUB $e6,$e9,$ed,$f0,$f4,$f7,$fb,$ff
      
 .L2300
-        LDA L0085
+        LDA hammer_timer
         BEQ L2318
 
         LDA L008A
@@ -2159,7 +2180,7 @@ L1FE6 = L1FE5+1
         JSR PlaySound
 
 .L230D
-        LDA L0085
+        LDA hammer_timer
         CMP #$1F
         BNE L2318
 
@@ -2167,7 +2188,7 @@ L1FE6 = L1FE5+1
         JSR PlaySound
 
 .L2318
-        LDA L0087
+        LDA player_falling_down
         BEQ L234E
 
         LDY #$03
@@ -2181,7 +2202,7 @@ L1FE6 = L1FE5+1
         BEQ L2333
 
         INC L0081
-        INC L0087
+        INC player_falling_down
         DEC L0076
 .L232E
         BNE L2323
@@ -2189,16 +2210,16 @@ L1FE6 = L1FE5+1
         JMP L25FB
 
 .L2333
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCC L233D
 
-        LDA L0084
-        STA L0082
+        LDA jump_animation
+        STA sprite_animation
 .L233D
         JSR L25FB
 
-        LDA L0087
+        LDA player_falling_down
         LDX #$FF
         CMP #$14
         BCC L234A
@@ -2206,11 +2227,11 @@ L1FE6 = L1FE5+1
         STX L008B
 .L234A
         INX
-        STX L0087
+        STX player_falling_down
         RTS
 
 .L234E
-        LDA L0083
+        LDA jump_timer
         BEQ L2396
 
         JSR L25FB
@@ -2218,7 +2239,7 @@ L1FE6 = L1FE5+1
 .L2355
         LDA L0080
         CLC
-        ADC L0088
+        ADC jump_flag
         CMP #$06
         BCC L2364
 
@@ -2227,7 +2248,7 @@ L1FE6 = L1FE5+1
 
         STA L0080
 .L2364
-        LDA L0083
+        LDA jump_timer
         CMP #$0D
         BCC L2370
 
@@ -2250,7 +2271,7 @@ L1FE6 = L1FE5+1
 
         INC L0081
 .L2382
-        DEC L0083
+        DEC jump_timer
         BNE L2393
 
         JSR L2549
@@ -2259,9 +2280,9 @@ L1FE6 = L1FE5+1
 
 .L238B
         LDA #$00
-        STA L0083
-        LDA L0084
-        STA L0082
+        STA jump_timer
+        LDA jump_animation
+        STA sprite_animation
 .L2393
         JMP L25FB
 
@@ -2289,7 +2310,7 @@ L1FE6 = L1FE5+1
         BPL L23A4
 
 .L23B4
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCS L23F7
 
@@ -2301,13 +2322,13 @@ L1FE6 = L1FE5+1
 
         JSR L25FB
 
-        LDA L0082
-        STA L0084
+        LDA sprite_animation
+        STA jump_animation
         LSR A
         ORA #$06
-        STA L0082
+        STA sprite_animation
         LDX #$12
-        STX L0083
+        STX jump_timer
         LDX #$00
         BIT L0079
         BPL L23DE
@@ -2325,13 +2346,13 @@ L1FE6 = L1FE5+1
 
         DEX
 .L23E7
-        STX L0088
+        STX jump_flag
         LDA #$00
         STA L008A
         JMP L2355
 
 .L23F0
-        LDA L0085
+        LDA hammer_timer
         BEQ L23F7
 
         JMP L24BF
@@ -2360,7 +2381,7 @@ L1FE6 = L1FE5+1
         BVS     L2426
 
         LDA #$FA
-        INC L0089
+        INC current_platform
 .L2418
         LDX #$08
         LDY #$C0
@@ -2378,17 +2399,17 @@ L1FE6 = L1FE5+1
         LDY #$00
         LDX #$01
 .L242C
-        STX L0082
+        STX sprite_animation
         STY L0086
         BNE L243E
 
 .L2432
         PHA
-        LDA L0082
+        LDA sprite_animation
         EOR #$01
         AND #$01
         ORA #$04
-        STA L0082
+        STA sprite_animation
         PLA
 .L243E
         CLC
@@ -2416,7 +2437,7 @@ L1FE6 = L1FE5+1
 
         BVS L2473
 
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCS L2490
 
@@ -2438,7 +2459,7 @@ L1FE6 = L1FE5+1
 
         BVC L2486
 
-        DEC L0089
+        DEC current_platform
         LDA #$06
         LDY #$80
         LDX #$04
@@ -2467,23 +2488,23 @@ L1FE6 = L1FE5+1
         CLC
         ADC L0081
         STA L0081
-        LDA L0082
+        LDA sprite_animation
         EOR #$01
         AND #$01
         ORA #$04
-        STA L0082
+        STA sprite_animation
         JSR L2549
 
         CMP #$50
         BNE L24B6
 
         LDA #$01
-        STA L0082
+        STA sprite_animation
 .L24B6
         JMP L25FB
 
 .L24B9
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCS L24F0
 
@@ -2499,12 +2520,12 @@ L1FE6 = L1FE5+1
 
         INC L0080
         INC L0080
-        LDA L0082
+        LDA sprite_animation
         AND #$01
         ORA #$02
 .L24D6
         EOR #$01
-        STA L0082
+        STA sprite_animation
         JSR L257B
 
         JSR L25F1
@@ -2518,7 +2539,7 @@ L1FE6 = L1FE5+1
 
         BEQ L24EE
 
-        INC L0087
+        INC player_falling_down
 .L24EE
         DEC L0081
 .L24F0
@@ -2536,16 +2557,16 @@ L1FE6 = L1FE5+1
 
         DEC L0080
         DEC L0080
-        LDA L0082
+        LDA sprite_animation
         AND #$01
         BPL L24D6
 
 .L2508
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCS L24F0
 
-        LDA L0085
+        LDA hammer_timer
         BNE L252A
 
         LDA L0080
@@ -2599,7 +2620,7 @@ L1FE6 = L1FE5+1
         TAY
         JSR CalcXYAddress
 
-        LDA L0082
+        LDA sprite_animation
         AND #$02
         ASL A
         ASL A
@@ -2638,7 +2659,7 @@ L1FE6 = L1FE5+1
         SBC #$0C
         BCS L2584
 
-        LDA L0089
+        LDA current_platform
         TAY
         LSR A
         TXA
@@ -2725,14 +2746,14 @@ L1FE6 = L1FE5+1
         RTS
 
 .L25F1
-        LDA L0085
+        LDA hammer_timer
         BEQ L25FB
 
         LDA L008A
         EOR #$01
         STA L008A
 .L25FB
-        LDA L0082
+        LDA sprite_animation
         CMP #$05
         BCC L2607
 
@@ -2748,10 +2769,10 @@ L1FE6 = L1FE5+1
         STA L0057
         EOR #$01
 .L2611
-        LDX L0085
+        LDX hammer_timer
         BEQ L2633
 
-        DEC L0085
+        DEC hammer_timer
         TAY
         CLC
         LDA L0C48,Y
@@ -2768,7 +2789,7 @@ L1FE6 = L1FE5+1
         JSR PlotSpriteEOR       ; Sprite 8 wide
 
 .L2633
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCC L264F
 
@@ -2925,7 +2946,7 @@ L1FE6 = L1FE5+1
         CPY #$03
         BNE L271C
 
-        LDA L0089
+        LDA current_platform
         ADC #$09
         TAY
 .L271C
@@ -3624,7 +3645,7 @@ L1FE6 = L1FE5+1
         LDA L0080
         AND #$FE
         TAX
-        LDY L0089
+        LDY current_platform
         BNE L2B13
 
         CPX #$0C
@@ -3705,7 +3726,7 @@ L1FE6 = L1FE5+1
 
 .L2B73
         LDA #$00
-        LDY L0053
+        LDY bonus_time
         JSR L1B24
 
         INC L005B
@@ -3763,7 +3784,7 @@ L1FE6 = L1FE5+1
         LDA L0080
         AND #$FE
         TAX
-        LDY L0089
+        LDY current_platform
         BNE L2BF6
 
         LDA L0641
@@ -3908,7 +3929,7 @@ L1FE6 = L1FE5+1
 
 .L2C9D
         LDA #$00
-        LDY L0053
+        LDY bonus_time
         JSR L1B24
 
         INC L005B
@@ -4066,7 +4087,7 @@ L1FE6 = L1FE5+1
 
 .L2D80
         LDA #$00
-        LDY L0053
+        LDY bonus_time
         JSR L1B24
 
         INC L005B
@@ -4106,7 +4127,7 @@ L1FE6 = L1FE5+1
 
         JSR TimerDelay
 
-        LDY L0089
+        LDY current_platform
         BEQ L2DF5
 
         LDA L0080
@@ -4193,9 +4214,9 @@ L1FE6 = L1FE5+1
         JMP L2E7A
 
 .L2E3C
-        LDY L0089
+        LDY current_platform
         TXA
-        LDX L0082
+        LDX sprite_animation
         CPX #$02
         BCC L2E47
 
@@ -4222,7 +4243,7 @@ L1FE6 = L1FE5+1
         STA L0645,Y
         LDA L0C96,X
         TAX
-        LDY L0089
+        LDY current_platform
         LDA L0C91,Y
         TAY
         LDA #$0C
@@ -4258,7 +4279,7 @@ L1FE6 = L1FE5+1
 .L2E95
         LDA #$00
         STA L005B
-        LDY L0053
+        LDY bonus_time
         JSR L1B24
 
         JSR L25F1
@@ -4361,20 +4382,20 @@ L1FE6 = L1FE5+1
         STX L006A
         STX L006B
         STX L006D
-        STX L0083
-        STX L0085
+        STX jump_timer
+        STX hammer_timer
         STX L0086
-        STX L0087
-        STX L0089
+        STX player_falling_down
+        STX current_platform
         STX L008A
         STX L008B
         LDA #$18
         STA Height
         STA L0067
         LDY #$02
-        STY L0082
+        STY sprite_animation
         LDA #$80
-        STA L0053
+        STA bonus_time
         JMP L1FC0
 
 .L2F4C
@@ -4413,7 +4434,7 @@ L1FE6 = L1FE5+1
         JSR L25F1
 
         LDA #$FE
-        STA L0085
+        STA hammer_timer
         JMP L25F1
 
 .L2F7B
@@ -4435,7 +4456,7 @@ L1FE6 = L1FE5+1
 
         LDA L0076
         AND #$07
-        STA L0082
+        STA sprite_animation
         JSR L25F1
 
         LDY #$00
@@ -4588,10 +4609,10 @@ L1FE6 = L1FE5+1
         JSR L0400
 
         LDA #$1F
-        JSR OSWRCH      ; Move text cursor to x,y
+        JSR OSWRCH                      ; Move text cursor to x,y
 
         LDA #$11
-        JSR OSWRCH      ; Define text colour
+        JSR OSWRCH                      ; Define text colour
 
         LDA L0078
         LSR A
@@ -4603,7 +4624,7 @@ L1FE6 = L1FE5+1
         LDY #$05
         LDA #$7F
 .L3085
-        JSR OSWRCH      ; Backspace and delete 5 characters
+        JSR OSWRCH                      ; Backspace and delete 5 characters
 
         DEY
         BNE L3085
@@ -4621,12 +4642,12 @@ L1FE6 = L1FE5+1
         STA text_address_high
         LDA #$C0
         LDY #$0E
-        JSR PutText
+        JSR PutText                     ; Print Enter Name:
 
         LDA #$00
         LDX #$B0
         LDY #$06
-        JSR OSWORD          ; Read line from input
+        JSR OSWORD                      ; Read line from input
 
         PHP
         LDA #$CF
@@ -4638,7 +4659,7 @@ L1FE6 = L1FE5+1
         LDA #$7F
         LDX #$00
 .L30BC
-        JSR OSWRCH          ; Backspace and delete 255 characters ?
+        JSR OSWRCH                      ; Backspace and delete 255 characters ?
 
         DEX
         BNE L30BC
@@ -4692,7 +4713,7 @@ L1FE6 = L1FE5+1
         LDA L0080
         AND #$FE
         STA temp_address_low
-        LDA L0082
+        LDA sprite_animation
         CMP #$06
         BCC L3129
 
@@ -4734,17 +4755,17 @@ L1FE6 = L1FE5+1
         CMP L0081
         BCC L315C
 
-        LDA L0085
+        LDA hammer_timer
         BEQ L3158
 
         CPY L0081
         BCC L3158
 
-        LDA L0082
+        LDA sprite_animation
         CMP #$04
         BCS L3158
 
-        LDA L0082
+        LDA sprite_animation
         CMP #$02
         BCS L315D
 
@@ -4817,15 +4838,15 @@ L1FE6 = L1FE5+1
         JSR L1AE7
 
         ; This is location 0400 when data is relocated
-        JSR L3000 ; L0400               ; Display High scores on main screen
+        JSR L3000 ; L0400                               ; Display High scores on main screen
 
 .L31AC
-        LDA #$78                        ; %01111000
-        LDX PlaySound                   ;
-        CPX #$60                        ; %01100000
+        LDA #$78                                        ; %01111000
+        LDX PlaySound                                   ;
+        CPX #$60                                        ; %01100000
         BNE L31B7
 
-        LDA #$7D                        ; %01111101
+        LDA #$7D                                        ; %01111101
 .L31B7
         LDY #$04
         JSR PutText
@@ -4840,25 +4861,25 @@ L1FE6 = L1FE5+1
 .L31C2
         LDA #$81
         LDY #$FF
-        LDX #keyCodeS           ; Sound On / Off
-        JSR OSBYTE              ; Read key within time limit
+        LDX #keyCodeS                           ; Sound On / Off
+        JSR OSBYTE                              ; Read key within time limit
 
         INX
-        BNE S_not_pressed       ; S not pressed
+        BNE S_not_pressed                       ; S not pressed
 
         LDA PlaySound
-        EOR #$C9                ; %11001001
-        STA PlaySound           ; Sound On / Off flag - Toggle 0B70 between RTS and LDA
+        EOR #$C9                                ; %11001001
+        STA PlaySound                           ; Sound On / Off flag - Toggle 0B70 between RTS and LDA
         BNE L31AC
 
 .S_not_pressed
         LDA #$81
         LDY #$FF
-        LDX #keyCodeSPACE       ;
-        JSR OSBYTE              ; Read key within time limit
+        LDX #keyCodeSPACE                       ;
+        JSR OSBYTE                              ; Read key within time limit
 
         INX
-        BNE SPACE_not_presse    ; SPACE not pressed
+        BNE SPACE_not_pressed                   ; SPACE not pressed
 
         LDA L007B
         ORA #$80
@@ -4868,7 +4889,7 @@ L1FE6 = L1FE5+1
 .SPACE_not_pressed
         LDA #$80
         LDX #$00
-        JSR OSBYTE              ; Read ADC channel/fire buttons/last coversion
+        JSR OSBYTE                              ; Read ADC channel/fire buttons/last coversion
 
         TXA
         LSR A
@@ -4882,8 +4903,8 @@ L1FE6 = L1FE5+1
 
 ;-------------------------------------------------------------------------
 
-.L3200
-        EQUB $00,$00,$00,$00,$15,$00,$00,$15
+.L3200                                          
+        EQUB $00,$00,$00,$00,$15,$00,$00,$15    
         EQUB $15,$3F,$15,$3F,$15,$3F,$2A,$2A 
         EQUB $2A,$3F,$2A,$3F,$2A,$3F,$15,$15 
         EQUB $00,$00,$00,$00,$2A,$00,$00,$2A 
@@ -4924,7 +4945,8 @@ L1FE6 = L1FE5+1
 
         EQUB $B8,$06,$05,$20,$7F,$00,$00,$00
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
-
+        
+        ; L06C0
         EQUS ": eman retnE"
 
         EQUB $12,$02,$1F,$12,$13,$1F,$00,$00
