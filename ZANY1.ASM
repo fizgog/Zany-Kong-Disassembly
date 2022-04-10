@@ -29,7 +29,7 @@ bonus_time              = $0053
 L0054   = $0054
 L0055   = $0055
 Level   = $0056
-L0057   = $0057
+temp                    = $0057
 text_address_low        = $0058 
 text_address_high       = $0059 
 Lives                   = $005A
@@ -63,7 +63,7 @@ L0077                   = $0077 ; Fire sprite ?
 L0078                   = $0078
 L0079                   = $0079
 L007A                   = $007A
-L007B                   = $007B
+L007B                   = $007B ; keycode $007B - $007F
 XPos                    = $0080
 YPos                    = $0081
 sprite_animation        = $0082 ; Sprite animation 
@@ -1018,7 +1018,6 @@ ORG $1A00
 ; Define logical colour
 ; VDU 19, 0-255,p,r,g,b - set logical colour
 ;-------------------------------------------------------------------------
-
         LDY #$0F
 .L1960
         LDA #$13
@@ -1124,7 +1123,7 @@ ORG $1A00
         JSR SetGCOL
 
 .L19F6
-        JSR L1A5C
+        JSR DrawLadder
 
         DEC YPos
         BNE L19F6
@@ -1147,30 +1146,30 @@ ORG $1A00
         JSR OSWRCH          ; Write text at text cursor
 
         LDX #$00
-        STX L0057
+        STX temp
         LDA (text_address_low),Y
         ASL A
-        ROL L0057
+        ROL temp
 .L1A1B
         ASL A
-        ROL L0057
+        ROL temp
         ASL A
-        ROL L0057
+        ROL temp
         JSR OSWRCH
 
-        LDA L0057
+        LDA temp
         JSR OSWRCH
 
         DEY
-        STX L0057
+        STX temp
         LDA (text_address_low),Y
         ASL A
-        ROL L0057
+        ROL temp
         ASL A
-        ROL L0057
+        ROL temp
         JSR OSWRCH
 
-        LDA L0057
+        LDA temp
         JSR OSWRCH
 
         DEY
@@ -1202,31 +1201,39 @@ ORG $1A00
 
 .L1A5B
         RTS
-;-------------------------------------------------------------------------
 
-.L1A5C
+;-------------------------------------------------------------------------
+; Draw Ladder 
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
+;-------------------------------------------------------------------------
+.DrawLadder
         JSR L1A02
 
-        LDA #$E2
+        LDA #$E2        ; VDU 226
         JSR OSWRCH      ; Plot top ladder section character 226
 
-.L1A64
+.ladder_loop
         LDA #$08
         JSR OSWRCH      ; Backspace cursor one character
 
         LDA #$0A
         JSR OSWRCH      ; Move cursor down one line
 
-        LDA #$E3
+        LDA #$E3        ; VDU 227
         JSR OSWRCH      ; Plot bottom ladder section character 227
 
         DEX
-        BNE L1A64
+        BNE ladder_loop
 
         RTS
 
 ;-------------------------------------------------------------------------
 ; DisplayHUD
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
 ;-------------------------------------------------------------------------
 .DisplayHUD
         LDY #$36
@@ -1244,13 +1251,13 @@ ORG $1A00
         DEX
         BEQ one_life
 
-        LDA #$E4
+        LDA #$E4                                ; VDU 228
         JSR OSWRCH                              ; Plot life man character 228
 
         DEX
         BEQ one_life
 
-        LDA #$E4
+        LDA #$E4                                ; VDU 228
         JSR OSWRCH                              ; Plot life man character 228
 
 .one_life
@@ -1264,12 +1271,13 @@ ORG $1A00
         JSR PrintString
 
         LDX #$02
-.L1AAC
+
+.score_loop
         LDA score1,X
         JSR BCDtoScreen                         ; Print Score value
 
         DEX
-        BPL L1AAC
+        BPL score_loop
 
         RTS
 
@@ -1299,6 +1307,9 @@ ORG $1A00
 
 ;-------------------------------------------------------------------------
 ; BonusCountdownTimer
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
 ;-------------------------------------------------------------------------
 .BonusCountdownTimer
         LDA bonus_time
@@ -1344,11 +1355,11 @@ ORG $1A00
         STA Height
         DEY
         LDA (L0054),Y
-        STY L0057
+        STY temp
         TAX
         JSR PlotXLoop
 
-        LDY L0057
+        LDY temp
         DEY
         BPL L1AED
         RTS
@@ -1460,8 +1471,8 @@ ORG $1A00
         DEC YPos
         BNE L1B6D
 
-        LDA #$E0
-        JSR OSWRCH      ; Plot blank character 224
+        LDA #$E0        ; VDU 224
+        JSR OSWRCH      ; Plot left hand girder character 224
 
         LDA #$CD
         STA sprite_animation
@@ -1540,9 +1551,9 @@ ORG $1A00
 .L1BFA
         JSR L1A06
 
-        LDA #$E0
+        LDA #$E0        ; VDU 224
 .L1BFF
-        JSR OSWRCH      ; Plot blank character 224
+        JSR OSWRCH      ; Plot left hand girder character 224
 
         DEX
         BNE L1BFF
@@ -1572,7 +1583,7 @@ L1C1A = L1C19+1
         BCS L1C27
 
 .L1C22
-        LDA #$E1
+        LDA #$E1        ; VDU 225
         JSR OSWRCH      ; Plot right hand girder character 225
 
 .L1C27
@@ -1605,7 +1616,7 @@ L1C1A = L1C19+1
 .L1C52
         JSR L1A06
 
-        LDA #$E0
+        LDA #$E0        ; VDU 224
 .L1C57
         JSR OSWRCH      ; Plot left hand girder character 224
 
@@ -1636,7 +1647,7 @@ L1C1A = L1C19+1
 .L1C7E
         JSR L1A02
 
-        LDA #$E0
+        LDA #$E0        ; VDU 224
         JSR OSWRCH      ; Plot left hand girder character 224
 
         INC XPos
@@ -2057,6 +2068,7 @@ L1FE6 = L1FE5+1
         EOR #$01
         STA L0610,X
         JMP L2157
+        ; Return
 
 .L2154
         STA L0611,X
@@ -2125,6 +2137,7 @@ L1FE6 = L1FE5+1
         LDA #$1E
         STA sprite_address_high               ; Sprite Address $1E80 or $1EC0
         JMP PlotSpriteEOR16
+        ; Return
 
 ;-------------------------------------------------------------------------
 
@@ -2195,6 +2208,7 @@ L1FE6 = L1FE5+1
 .L221F
         LDA #$07
         JMP PlotSpriteEOR       ; Sprite 8 wide
+        ; Return
 
 .L2224
         LDA L0C7C,X
@@ -2202,9 +2216,10 @@ L1FE6 = L1FE5+1
         LDA #$1D
         STA sprite_address_high
         LDA #$80
-        STA sprite_address_low               ; Sprite Address $1D80
+        STA sprite_address_low  ; Sprite Address $1D80
         LDA #$07
         JMP PlotSpriteEOR       ; Sprite 8 wide
+        ; Return
 
 .L2235
         LDY L0062
@@ -2219,9 +2234,10 @@ L1FE6 = L1FE5+1
         LDA #$11
         STA sprite_address_high
         LDA #$60
-        STA sprite_address_low               ; Sprite Address $1160
+        STA sprite_address_low  ; Sprite Address $1160
         LDA #$07
         JMP PlotSpriteEOR       ; Sprite 8 wide
+        ; Return
 
 .L224E
         LDA L89AB,X
@@ -2310,6 +2326,7 @@ L1FE6 = L1FE5+1
         BNE L2323
 
         JMP L25FB
+        ; Return
 
 .L2333
         LDA sprite_animation
@@ -2387,6 +2404,7 @@ L1FE6 = L1FE5+1
         STA sprite_animation
 .L2393
         JMP L25FB
+        ; Return
 
 .L2396
         LDA L007B
@@ -2395,21 +2413,23 @@ L1FE6 = L1FE5+1
         JSR L267B
 
         JMP L23B4
+        ; Return
 
 
 .L23A0
         LDA #$81
         LDY #$04
-.L23A4
-        STY L0057
+
+.keyscan_loop
+        STY temp
         LDX L007B,Y             ; Key codes ?
         LDY #$FF
         JSR OSBYTE              ; Read key within time limit
 
-        LDY L0057
+        LDY temp
         STX L0076,Y
         DEY
-        BPL L23A4
+        BPL keyscan_loop
 
 .L23B4
         LDA sprite_animation
@@ -2452,12 +2472,14 @@ L1FE6 = L1FE5+1
         LDA #$00
         STA L008A
         JMP L2355
+        ; Return
 
 .L23F0
         LDA hammer_timer
         BEQ L23F7
 
         JMP L24BF
+        ; Return
 
 .L23F7
         BIT L0077
@@ -2472,6 +2494,7 @@ L1FE6 = L1FE5+1
         BEQ L2409
 
         JMP L24B9
+        ; Return
 
 .L2409
         JSR L25FB
@@ -2529,6 +2552,7 @@ L1FE6 = L1FE5+1
         STA L0086
 .L2452
         JMP L25FB
+        ; Return
 
 .L2455
         BIT L0078
@@ -2604,6 +2628,7 @@ L1FE6 = L1FE5+1
         STA sprite_animation
 .L24B6
         JMP L25FB
+        ; Return
 
 .L24B9
         LDA sprite_animation
@@ -2695,6 +2720,7 @@ L1FE6 = L1FE5+1
         JSR L257B
 
         JMP L25F1
+        ; Return
 
 .L2533
         LDA #$19
@@ -2735,7 +2761,7 @@ L1FE6 = L1FE5+1
         RTS
 
 .L2565
-        STY L0057
+        STY temp
         LDX XPos
         LDA YPos
         CLC
@@ -2743,7 +2769,7 @@ L1FE6 = L1FE5+1
         TAY
         JSR CalcXYAddress
 
-        LDY L0057
+        LDY temp
         LDA (screen_address_low),Y
         AND #$50
         CMP #$50
@@ -2868,7 +2894,7 @@ L1FE6 = L1FE5+1
         AND #$02
         ORA L008A
         EOR #$01
-        STA L0057
+        STA temp
         EOR #$01
 .L2611
         LDX hammer_timer
@@ -2905,6 +2931,7 @@ L1FE6 = L1FE5+1
         LDA #$00
         STA L008A
         JMP PlotSpriteEOR16
+        ; Return
 
 .L264F
         TAY
@@ -2919,7 +2946,7 @@ L1FE6 = L1FE5+1
         LDA #$05
         JSR PlotSpriteEOR               ; Sprite 6 wide
 
-        LDY L0057
+        LDY temp
         LDA L0C54,Y
         STA sprite_address_low
         LDA L0C5D,Y
@@ -2928,6 +2955,7 @@ L1FE6 = L1FE5+1
         LDX XPos
         LDY YPos
         JMP PlotSpriteEOR               ; Sprite 10 wide
+        ; Return
 
 .L267B
         LDA #$80
@@ -2960,6 +2988,7 @@ L1FE6 = L1FE5+1
 .L26A2
         STX L0077
         JMP L26A9
+        ; Return
 
 .L26A7
         STX L0078
@@ -3076,6 +3105,7 @@ L1FE6 = L1FE5+1
         BPL L2749
 
         JMP L27F9
+        ; Return
 
 .L2749
         JSR L281B
@@ -3089,6 +3119,7 @@ L1FE6 = L1FE5+1
         BPL L275C
 
         JMP L2813
+        ; Return
 
 .L275C
         LDX L0063
@@ -3221,6 +3252,7 @@ L1FE6 = L1FE5+1
         BMI L2812
 
         JMP L2733
+        ; Return
 
 .L2812
         RTS
@@ -3242,6 +3274,7 @@ L1FE6 = L1FE5+1
         STA sprite_address_high         ; Sprite Address $1F??
         LDA #$0B
         JMP PlotSpriteEOR               ; Sprite 12 wide
+        ; Return
 
 .L282C
         CLC
@@ -3399,6 +3432,7 @@ L1FE6 = L1FE5+1
         BPL L291D
 
         JMP L29AE
+        ; Return
 
 .L291D
         STA L0063
@@ -3408,6 +3442,7 @@ L1FE6 = L1FE5+1
         BVC L2929
 
         JMP L29BF
+        ; Return
 
 .L2929
         LDA L0063
@@ -3455,6 +3490,7 @@ L1FE6 = L1FE5+1
 .L295E
         INC L0063
         JMP L296A
+        ; Return
 
 .L2963
         JSR L2A1E
@@ -3509,6 +3545,7 @@ L1FE6 = L1FE5+1
         BMI L29B6
 
         JMP L2909
+        ; Return
 
 .L29B6
         RTS
@@ -3587,6 +3624,7 @@ L1FE6 = L1FE5+1
         STA sprite_address_high         ; Sprite Address $11??
         LDA #$0B
         JMP PlotSpriteEOR               ; Sprite 12 wide
+        ; Return
 
 .L2A1E
         LDX L0061
@@ -3698,7 +3736,7 @@ L1FE6 = L1FE5+1
         LDA Level
         ASL A
         ASL A
-        STA L0057
+        STA temp
         LSR A
         CMP #$09
         BCC L2AC6
@@ -3707,7 +3745,7 @@ L1FE6 = L1FE5+1
 .L2AC6
         STA L006E
         LDA #$23
-        SBC L0057
+        SBC temp
         STA L008F
         JSR L2F7B
 
@@ -3785,6 +3823,7 @@ L1FE6 = L1FE5+1
         JSR L2F6C
 
         JMP L2B56
+        ; Return
 
 .L2B3D
         LDA L0642
@@ -3809,6 +3848,7 @@ L1FE6 = L1FE5+1
         BEQ L2B60
 
         JMP L2AAB
+        ; Return
 
 .L2B60
         LDY YPos
@@ -3819,11 +3859,13 @@ L1FE6 = L1FE5+1
         BEQ L2B6D
 
         JMP L2AD5
+        ; Return
 
 .L2B6D
         JSR BonusCountdownTimer
 
         JMP L2AD1
+        ; Return
 
 .L2B73
         LDA #$00
@@ -3907,6 +3949,7 @@ L1FE6 = L1FE5+1
 
 .L2BF3
         JMP L2C80
+        ; Return
 
 .L2BF6
         CPX #$04
@@ -3964,6 +4007,7 @@ L1FE6 = L1FE5+1
         JSR L2F6C
 
         JMP L2C80
+        ; Return
 
 .L2C48
         CPY #$03
@@ -4012,6 +4056,7 @@ L1FE6 = L1FE5+1
         BEQ L2C8A
 
         JMP L2B7C
+        ; Return
 
 .L2C8A
         LDY YPos
@@ -4022,11 +4067,13 @@ L1FE6 = L1FE5+1
         BEQ L2C97
 
         JMP L2BBA
+        ; Return
 
 .L2C97
         JSR BonusCountdownTimer
 
         JMP L2BB6
+        ; Return
 
 .L2C9D
         LDA #$00
@@ -4132,6 +4179,7 @@ L1FE6 = L1FE5+1
         JSR L1B24
 
         JMP L2D63
+        ; Return
 
 .L2D37
         LDA L0642
@@ -4170,6 +4218,7 @@ L1FE6 = L1FE5+1
         BEQ L2D6D
 
         JMP L2CA6
+        ; Return
 
 .L2D6D
         LDY YPos
@@ -4180,11 +4229,13 @@ L1FE6 = L1FE5+1
         BEQ L2D7A
 
         JMP L2CD9
+        ; Return
 
 .L2D7A
         JSR BonusCountdownTimer
 
         JMP L2CD5
+        ; Return
 
 .L2D80
         LDA #$00
@@ -4267,6 +4318,7 @@ L1FE6 = L1FE5+1
 
 .L2DF5
         JMP L2E7A
+        ; Return
 
 .L2DF8
         LDA L0642
@@ -4313,6 +4365,7 @@ L1FE6 = L1FE5+1
         JSR L2F6C
 
         JMP L2E7A
+        ; Return
 
 .L2E3C
         LDY current_platform
@@ -4362,6 +4415,7 @@ L1FE6 = L1FE5+1
         BEQ L2E84
 
         JMP L2D89
+        ; Return
 
 .L2E84
         LDA L0066
@@ -4371,11 +4425,13 @@ L1FE6 = L1FE5+1
         BEQ L2E8F
 
         JMP L2DAD
+        ; Return
 
 .L2E8F
         JSR BonusCountdownTimer
 
         JMP L2DA9
+        ; Return
 
 .L2E95
         LDA #$00
@@ -4437,6 +4493,7 @@ L1FE6 = L1FE5+1
         STA Level
 .L2EF4
         JMP L2AAB
+        ; Return
 
 .L2EF7
         LDA #$08
@@ -4498,6 +4555,7 @@ L1FE6 = L1FE5+1
         LDA #$80
         STA bonus_time
         JMP L1FC0
+        ; Return
 
 .L2F4C
         LDY #$00
@@ -4522,6 +4580,7 @@ L1FE6 = L1FE5+1
 .L2F66
         LDA #$7E
         JMP OSBYTE          ; Acknowledge detection of ESCAPE condition
+        ; Return
 
 .L2F6B
         RTS
@@ -4537,6 +4596,7 @@ L1FE6 = L1FE5+1
         LDA #$FE
         STA hammer_timer
         JMP L25F1
+        ; Return
 
 .L2F7B
         JSR L25FB
@@ -4545,6 +4605,7 @@ L1FE6 = L1FE5+1
 
         LDX #$30
         JMP PlaySound
+        ; Return
 
 .L2F86
         LDX #$18
@@ -4574,6 +4635,7 @@ L1FE6 = L1FE5+1
         LDA #$0F
         LDX #$00
         JMP OSBYTE          ; Flush all or just input buffer
+        ; Return
 
 ;-------------------------------------------------------------------------
 ; DisplayHighScore
@@ -4769,6 +4831,7 @@ L1FE6 = L1FE5+1
         BCC L30C8
 
         JMP L2F66
+        ; Return
 
 .L30C8
         LDY L0078
@@ -4804,6 +4867,7 @@ L1FE6 = L1FE5+1
         DEY
         BNE L30DF
         JMP L058E
+        ; Return
 
         ; Data ?
         EQUB $00,$00,$00,$00,$00,$00,$00,$00
@@ -4836,6 +4900,7 @@ L1FE6 = L1FE5+1
         LDA #$00
         LDY #$02
         JMP L1B24
+        ; Return
 
 .L3129
         CPX L0054
@@ -4852,7 +4917,7 @@ L1FE6 = L1FE5+1
 
         CLC
         TYA
-        ADC L0057
+        ADC temp
         CMP YPos
         BCC L315C
 
@@ -4892,6 +4957,7 @@ L1FE6 = L1FE5+1
         LDA #$00
         LDY #$05
         JMP L1B24
+        ; Return
 
         LDA L008B
         BNE L3176
@@ -5001,6 +5067,7 @@ L1FE6 = L1FE5+1
         STA L007B
 .L31FD
         JMP L2AA8
+        ; Return
 
 ;-------------------------------------------------------------------------
 
@@ -5104,6 +5171,7 @@ L1FE6 = L1FE5+1
         JSR OSBYTE          ; Set base number for function-key codes
 
         JMP L30DD
+        ; Return
 
 ;-------------------------------------------------------------------------
 
