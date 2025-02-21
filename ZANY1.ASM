@@ -33,7 +33,7 @@ temp                    = $0057
 text_address_low        = $0058 
 text_address_high       = $0059 
 Lives                   = $005A
-L005B   = $005B
+LevelNum   = $005B
 last_clock_value        = $005C
 L005D   = $005D
 L005E   = $005E
@@ -1049,43 +1049,44 @@ ORG $1A00
         BPL L1960
         RTS
 ;-------------------------------------------------------------------------
-
-.L197F
+; DrawLevel
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
+;-------------------------------------------------------------------------
+.DrawLevel
         LDA #$17
         STA text_address_high
         JSR DisplayHUD
 
-        LDA #$05            ; VDU 5 - Write text at graphics cursor
-        JSR OSWRCH          ; Write text at graphics cursor
+        LDA #$05                  ; VDU 5 - Write text at graphics cursor
+        JSR OSWRCH                ; Write text at graphics cursor
 
-        LDX L005B
-        BNE L1994
-
-        JSR L19B3
+        LDX LevelNum              ; Level 0-3
+        BNE Skiplevel4            ; not 3 
+        JSR DrawLevel4            ; Level 4
 
         BNE L19A7
 
-.L1994
+.Skiplevel4
         DEX
-        BNE L199C
-
-        JSR L1B39
+        BNE SkipLevel3            ; not 2
+        JSR DrawLevel3            ; Level 3          
 
         BNE L19A7
 
-.L199C
+.SkipLevel3
         DEX
-        BNE L19A4
-
-        JSR L1BC8
+        BNE SkipLevel2            ; not 1
+        JSR DrawLevel2            ; Level 2
 
         BNE L19A7
 
-.L19A4
-        JSR L1C3B
+.SkipLevel2
+        JSR DrawLevel1            ; Level 1
 
 .L19A7
-        JSR L1AEB
+        JSR L1AEB          
 
         LDA #$17
         STA text_address_high
@@ -1094,7 +1095,7 @@ ORG $1A00
         ; Return
 ;-------------------------------------------------------------------------
 
-.L19B3
+.DrawLevel4
         LDA #$00
         STA L1700
         STA L1701
@@ -1445,7 +1446,7 @@ ORG $1A00
         ; Return
 ;-------------------------------------------------------------------------
 
-.L1B39
+.DrawLevel3
         LDA #$0F
         JSR SetGCOL
 
@@ -1538,7 +1539,7 @@ ORG $1A00
         LDY #$29
         RTS
 
-.L1BC8
+.DrawLevel2
         LDA #$18
         STA text_address_high
         LDA #$0C
@@ -1620,7 +1621,7 @@ L1C1A = L1C19+1
         LDY #$17
         RTS
 
-.L1C3B
+.DrawLevel1
         LDA #$0F
         JSR SetGCOL
 
@@ -2809,7 +2810,7 @@ L1FE6 = L1FE5+1
         RTS
 
 .L257B
-        LDX L005B
+        LDX LevelNum
         BNE L25B0
 
         LDX #$FF
@@ -3056,7 +3057,7 @@ L1FE6 = L1FE5+1
         CMP L006E
         BEQ L2731
 
-        LDX L005B
+        LDX LevelNum
         BNE L26EA
 
         LDA L0612
@@ -3102,7 +3103,7 @@ L1FE6 = L1FE5+1
         BPL L2700
 
 .L270A
-        LDY L005B
+        LDY LevelNum
         LDA L0C8A,Y
         STA L0628,X
         PHA
@@ -3174,7 +3175,7 @@ L1FE6 = L1FE5+1
         LDA L0077,X
         BNE L27A2
 
-        LDA L005B
+        LDA LevelNum
         BEQ L2790
 
         JSR L2871
@@ -3760,7 +3761,7 @@ L1FE6 = L1FE5+1
 .L2AA8
         JSR GameStart
 .L2AAA
-        JSR L197F
+        JSR DrawLevel
         JSR Initialise
 
         LDX #$12                ; xpos = 18
@@ -3906,9 +3907,9 @@ L1FE6 = L1FE5+1
         LDY bonus_time
         JSR L1B24
 
-        INC L005B
+        INC LevelNum
 .L2B7C
-        JSR L197F
+        JSR DrawLevel
 
         JSR Initialise
 
@@ -4114,9 +4115,9 @@ L1FE6 = L1FE5+1
         LDY bonus_time
         JSR L1B24
 
-        INC L005B
+        INC LevelNum
 .L2CA6
-        JSR L197F
+        JSR DrawLevel
 
         JSR Initialise
 
@@ -4276,9 +4277,9 @@ L1FE6 = L1FE5+1
         LDY bonus_time
         JSR L1B24
 
-        INC L005B
+        INC LevelNum
 .L2D89
-        JSR L197F
+        JSR DrawLevel
 
         JSR Initialise
 
@@ -4469,7 +4470,7 @@ L1FE6 = L1FE5+1
 
 .L2E95
         LDA #$00
-        STA L005B
+        STA LevelNum
         LDY bonus_time
         JSR L1B24
 
