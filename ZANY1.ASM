@@ -1026,7 +1026,7 @@ ORG $1A00
         LDA #$03
         STA Lives                               ; Start with 3 lives
         LDA #$A6                                ; text address is 17A6
-        LDY #$0B
+        LDY #$0B                                ; string length
         JSR PrintString
 
 ;-------------------------------------------------------------------------
@@ -1055,7 +1055,7 @@ ORG $1A00
         STA text_address_high
         JSR DisplayHUD
 
-        LDA #$05
+        LDA #$05            ; VDU 5 - Write text at graphics cursor
         JSR OSWRCH          ; Write text at graphics cursor
 
         LDX L005B
@@ -1089,7 +1089,7 @@ ORG $1A00
 
         LDA #$17
         STA text_address_high
-        LDA #$04
+        LDA #$04            ; VDU 4 - Write text at text cursor
         JMP OSWRCH          ; Write text at text cursor
         ; Return
 ;-------------------------------------------------------------------------
@@ -1147,6 +1147,11 @@ ORG $1A00
         LDY #$2F
         RTS
 ;-------------------------------------------------------------------------
+;
+;-------------------------------------------------------------------------
+; On Entry :
+; On Exit  : X contains number character to draw
+;-------------------------------------------------------------------------
 
 .L1A02
         LDA sprite_animation
@@ -1154,10 +1159,10 @@ ORG $1A00
 .L1A06
         LDY XPos
 .L1A08
-        LDA #$19
+        LDA #$19            ; VDU 25 - PLOT
         JSR OSWRCH          ; Plot x,y
 
-        LDA #$04
+        LDA #$04            ; VDU 4 - Write text to cursor
         JSR OSWRCH          ; Write text at text cursor
 
         LDX #$00
@@ -1199,7 +1204,7 @@ ORG $1A00
         JSR L1A02
 
 .L1A47
-        LDY #$07
+        LDY #$07                                ; string length
         LDA #$00                                ; text address is 1700?
         JSR PrintString
 
@@ -1210,7 +1215,7 @@ ORG $1A00
         LDA L1701
         BEQ L1A5B
 
-        LDA #$E1
+        LDA #$E1        ; VDU 225
         JMP OSWRCH      ; Plot right hand girder character 225
         ; Return
 
@@ -1230,10 +1235,10 @@ ORG $1A00
         JSR OSWRCH      ; Plot top ladder section character 226
 
 .ladder_loop
-        LDA #$08
+        LDA #$08        ; VDU 8 - Move cursor left
         JSR OSWRCH      ; Backspace cursor one character
 
-        LDA #$0A
+        LDA #$0A        ; VDU 10 - Move cursor down
         JSR OSWRCH      ; Move cursor down one line
 
         LDA #$E3        ; VDU 227
@@ -1251,14 +1256,14 @@ ORG $1A00
 ; On exit   : 
 ;-------------------------------------------------------------------------
 .DisplayHUD
-        LDY #$36
+        LDY #$36                                ; string length
         LDA #$5F                                ; text_address = $175F
         JSR PrintString                         ; Plot Score:, L=, 8000 and bonus box
 
         LDA Level
         JSR BCDtoScreen                         ; Print Level value
 
-        LDY #$02
+        LDY #$02                                ; string length
         LDA #$5C                                ; text address = $175C
         JSR PrintString                         ; Move text cursor to 9,0
 
@@ -1281,8 +1286,8 @@ ORG $1A00
         JSR L1AE7
 
 .L1AA3
-        LDY #$02
-        LDA #$59
+        LDY #$02                                ; string length
+        LDA #$59                                ; text_address = $1759
         JSR PrintString
 
         LDX #$02
@@ -1342,8 +1347,8 @@ ORG $1A00
 .L1AD8
         STA bonus_time
         CLD
-        LDY #$02
-        LDA #$68
+        LDY #$02                                ; string length
+        LDA #$68                                ; text_address_low = $??68
         JSR PrintString
 
         LDA bonus_time
@@ -1453,12 +1458,12 @@ ORG $1A00
 .L1B4A
         JSR L1A06
 
-        LDA #$E6
+        LDA #$E6                 ; VDU 230
 .L1B4F
-        JSR OSWRCH
+        JSR OSWRCH               ; Plot Girder at x,y
 
         DEX
-        BNE L1B4F
+        BNE L1B4F                ; Girder loop
 
         DEC YPos
         BNE L1B4A
@@ -1476,8 +1481,8 @@ ORG $1A00
         JSR L1A02
 
 .L1B70
-        LDY #$07
-        LDA #$00                                ; text_address_low
+        LDY #$07                                ; string length
+        LDA #$00                                ; text_address_low = $??00
         JSR PrintString
 
         DEX
@@ -1505,8 +1510,8 @@ ORG $1A00
         JSR L1A08
 
 .L1B9E
-        LDA #$FD
-        LDY #$06
+        LDA #$FD                                ; text_address_low = $??FD
+        LDY #$06                                ; string length
         JSR PrintString
 
         DEX
@@ -1549,8 +1554,8 @@ ORG $1A00
         JSR L1A02
 
         INC XPos
-        LDA #$6A
-        LDY #$05
+        LDA #$6A                            ; text_address_low = $??6A
+        LDY #$05                            ; string length
         JSR PrintString
 
         DEC YPos
@@ -1646,8 +1651,8 @@ L1C1A = L1C19+1
 .L1C65
         JSR L1A02
 
-        LDA #$C0
-        LDY #$05
+        LDA #$C0                    ; text_address_low = $??C0
+        LDY #$05                    ; string length
         JSR PrintString
 
         INC XPos
@@ -1806,7 +1811,13 @@ L1C1A = L1C19+1
         EQUB $30,$30,$30,$30,$30,$30,$14,$14
         EQUB $00,$00,$20,$20,$20,$20,$00,$28
 
-.L1FC0
+;-------------------------------------------------------------------------
+; ClearMemory
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
+;-------------------------------------------------------------------------
+.ClearMemory
         LDA #$FF
         LDY #$3F
 .L1FC4
@@ -1818,6 +1829,7 @@ L1C1A = L1C19+1
         STY L0066
         STY L006D
         RTS
+;-------------------------------------------------------------------------
 
 .L1FD0
         LDA L0066
@@ -2301,8 +2313,14 @@ L1FE6 = L1FE5+1
         EQUB $ad,$b0,$b4,$b7,$bb,$bf,$c2,$c6
         EQUB $c9,$cd,$d0,$d4,$d7,$db,$df,$e2
         EQUB $e6,$e9,$ed,$f0,$f4,$f7,$fb,$ff
-     
-.L2300
+
+;-------------------------------------------------------------------------
+; CheckHammer
+;-------------------------------------------------------------------------
+; On entry  : 
+; On exit   : 
+;-------------------------------------------------------------------------
+.CheckHammer
         LDA hammer_timer
         BEQ L2318
 
@@ -3743,32 +3761,33 @@ L1FE6 = L1FE5+1
         JSR GameStart
 .L2AAA
         JSR L197F
-        JSR L2F1F
-        LDX #$12
-        STX XPos
-        LDY #$E7
-        STY YPos
+        JSR Initialise
+
+        LDX #$12                ; xpos = 18
+        STX XPos                
+        LDY #$E7                ; ypos = 238
+        STY YPos                ; Player position 4,28 (18/4 = 4, 238/8 = 28)
         LDA Level
-        ASL A
-        ASL A
-        STA temp
+        ASL A                   ; A=A*2
+        ASL A                   ; A=A*4
+        STA temp                ; temp = 4 for level 1, 8 for level 2 and so on
         LSR A
         CMP #$09
         BCC L2AC6
 
-        LDA #$08                ; max 8 levels
+        LDA #$08                ; max 8 (something to do with bonus timer)
 .L2AC6
         STA L006E
         LDA #$23
         SBC temp
         STA L008F
-        JSR L2F7B
+        JSR L2F7B              ; bonus timer code
 
 .L2AD1
         LDA #$0E
         STA L005D
 .L2AD5
-        JSR L2300
+        JSR CheckHammer
 
         JSR L2EF7
 
@@ -3891,7 +3910,7 @@ L1FE6 = L1FE5+1
 .L2B7C
         JSR L197F
 
-        JSR L2F1F
+        JSR Initialise
 
         LDX #$08
         STX XPos
@@ -3926,7 +3945,7 @@ L1FE6 = L1FE5+1
         LDA #$0E
         STA L005D
 .L2BBA
-        JSR L2300
+        JSR CheckHammer
 
         LDA #$0A
         JSR L2EF9
@@ -4099,7 +4118,7 @@ L1FE6 = L1FE5+1
 .L2CA6
         JSR L197F
 
-        JSR L2F1F
+        JSR Initialise
 
         LDX #$08
         STX XPos
@@ -4129,7 +4148,7 @@ L1FE6 = L1FE5+1
         LDA #$0E
         STA L005D
 .L2CD9
-        JSR L2300
+        JSR CheckHammer
 
         LDA #$0A
         JSR L2EF9
@@ -4261,7 +4280,7 @@ L1FE6 = L1FE5+1
 .L2D89
         JSR L197F
 
-        JSR L2F1F
+        JSR Initialise
 
         LDX #$08
         STX XPos
@@ -4283,7 +4302,7 @@ L1FE6 = L1FE5+1
         LDA #$0E
         STA L005D
 .L2DAD
-        JSR L2300
+        JSR CheckHammer
 
         LDA #$0A
         JSR L2EF9
@@ -4458,8 +4477,8 @@ L1FE6 = L1FE5+1
 
         LDA #$0B
         STA text_address_high
-        LDA #$F3
-        LDY #$04
+        LDA #$F3                        ; text_address_low = $0BF3
+        LDY #$04                        ; string length
         JSR PrintString
 
         LDY #$1A
@@ -4528,7 +4547,6 @@ L1FE6 = L1FE5+1
 ; On entry  : 
 ; On exit   :
 ;-------------------------------------------------------------------------
-
 .TimerDelay
         LDA #$01
         LDY #$0B
@@ -4545,9 +4563,12 @@ L1FE6 = L1FE5+1
         STX last_clock_value
         RTS
 ;-------------------------------------------------------------------------
-; Initialise ??
+; Initialise
 ;-------------------------------------------------------------------------
-.L2F1F
+; On entry  : 
+; On exit   :
+;-------------------------------------------------------------------------
+.Initialise
         LDX #$00
         STX L005E
         STX L005F
@@ -4569,7 +4590,7 @@ L1FE6 = L1FE5+1
         STY sprite_animation
         LDA #$80
         STA bonus_time
-        JMP L1FC0
+        JMP ClearMemory
         ; Return
 
 .L2F4C
@@ -4701,8 +4722,8 @@ L1FE6 = L1FE5+1
 ; Display hiscore on main screen
 ;-------------------------------------------------------------------------
 .L3000
-        LDA #$38
-        LDY #$29
+        LDA #$38                    ; text_address_low = $??3B
+        LDY #$29                    ; string length
         JSR PrintString
         LDY #$07
         LDX #$02
@@ -4818,9 +4839,9 @@ L1FE6 = L1FE5+1
 
         LDA #$06
         STA text_address_high
-        LDA #$C0
-        LDY #$0E
-        JSR PrintString                     ; Print Enter Name:
+        LDA #$C0                        ; text_address_low
+        LDY #$0E                        ; string length      
+        JSR PrintString                 ; Print Enter Name:
 
         LDA #$00
         LDX #$B0
@@ -4828,8 +4849,8 @@ L1FE6 = L1FE5+1
         JSR OSWORD                      ; Read line from input
 
         PHP
-        LDA #$CF
-        LDY #$02
+        LDA #$CF                        ; text_address_low = $??CF
+        LDY #$02                        ; string length
         JSR PrintString
 
         LDA #$0B
@@ -4993,8 +5014,8 @@ L1FE6 = L1FE5+1
 .GameOver
         LDA #$0B
         STA text_address_high
-        LDA #$E0                        ; text address 0BE0
-        LDY #$12
+        LDA #$E0                            ; text address 0BE0
+        LDY #$12                            ; string length
         JSR PrintString                     ; Display Game Over
 
         JSR L2F4C
@@ -5008,30 +5029,30 @@ L1FE6 = L1FE5+1
         LDX #$FF
         TXS
         LDA #$0B
-        STA text_address_high           ; Text Hi byte address
-        LDA #$82                        ; text address $0B82
-        LDY #$5D
+        STA text_address_high               ; Text Hi byte address
+        LDA #$82                            ; text address $0B82
+        LDY #$5D                            ; string length
         JSR PrintString                     ; Sound, How high can you try, Press SPACE.....
 
-        JSR CheckHighScore              ; 
+        JSR CheckHighScore                  ; 
 
         LDA #$9C
         LDY #$05
         JSR L1AE7
 
         ; This is location 0400 when data is relocated
-        JSR L3000 ; L0400                               ; Display High scores on main screen
+        JSR L3000 ; L0400                   ; Display High scores on main screen
 
 .L31AC
-        LDA #$78                                        ; %01111000
-        LDX PlaySound                                   ;
-        CPX #$60                                        ; %01100000
+        LDA #$78                            ; text_address_low
+        LDX PlaySound                       ; sound on or off
+        CPX #$60                            ; sound toggle
         BNE L31B7
 
-        LDA #$7D                                        ; %01111101
+        LDA #$7D                            ; text_address_low
 .L31B7
-        LDY #$04
-        JSR PrintString
+        LDY #$04                            ; string length
+        JSR PrintString                     ; display sound on or off?
 
 .L31BC
         DEX
